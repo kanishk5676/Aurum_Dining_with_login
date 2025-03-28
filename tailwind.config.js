@@ -15,6 +15,8 @@ export default {
         harmonia: ['"Harmonia Sans Condensed"', 'sans-serif'],
         haboroThin: ['Haboro Contrast Cond Thin', 'sans-serif'],
         haboroBold: ['Haboro Contrast Cond Bold', 'sans-serif'],
+        allura: ['Allura', 'cursive'],
+        trajan: ['Trajan Pro', 'serif'],
       },
     },
   },

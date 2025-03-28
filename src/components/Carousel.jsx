@@ -2,11 +2,14 @@ import { useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import food1 from "../assets/food1.jpg";
 import food2 from "../assets/food2.jpg";
-import food3 from "../assets/food3.jpg";
-import food4 from "../assets/food4.avif";
+import food6 from "../assets/food6.avif";
+import restaurant from "../assets/restaurant1.avif";
 
-const images=[
-    food1,food2,food3,food4
+const images = [
+  { src: food1, title: ["Rise", "and", "Dine"], subtitle: "Start your day with a feast of flavors." },
+  { src: food2, title: ["An Experience", "Like", "No Other"], subtitle: "A journey of taste, crafted to perfection." },
+  { src: restaurant, title: ["Aesthetic", "Ambience"], subtitle: "Dine in luxury with a view to remember." },
+  { src: food6, title: ["Our", "Signature", "Dishes"], subtitle: "Crafted by master chefs for a perfect bite." }
 ];
 
 function Carousel() {
@@ -21,15 +24,31 @@ function Carousel() {
   };
 
   return (
-    <div className="relative w-screen h-[500px] mt-20 bg-black z-10">
-      <div className="overflow-hidden w-full h-full flex items-center justify-center">
+    <div className="relative w-screen h-screen bg-[#242424] z-10">
+      {/* Image Container */}
+      <div className="absolute inset-0 w-full h-full">
         <img
-          src={images[currentIndex]}
+          src={images[currentIndex].src}
           alt="carousel"
-          className="max-w-full max-h-full object-contain"
+          className="w-full h-full object-cover"
         />
+
+        {/* Text Overlay - Aligned to Left & Styled */}
+        <div className="absolute top-1/3 left-16 md:left-32 text-white text-left">
+          {/* Title - Stacked Words */}
+          <div className="flex flex-col text-6xl font-bold uppercase tracking-wide drop-shadow-lg">
+            {images[currentIndex].title.map((word, index) => (
+              <span key={index}>{word}</span>
+            ))}
+          </div>
+          
+          {/* Subtitle - Slightly Smaller and Stylish */}
+          <p className="text-xl mt-4 drop-shadow-md px-4 py-2 rounded-md font-montserrat">
+            {images[currentIndex].subtitle}
+          </p>
+        </div>
       </div>
-  
+
       {/* Left Arrow */}
       <button
         onClick={prevSlide}
@@ -37,7 +56,7 @@ function Carousel() {
       >
         <FaChevronLeft size={24} />
       </button>
-  
+
       {/* Right Arrow */}
       <button
         onClick={nextSlide}
@@ -45,7 +64,7 @@ function Carousel() {
       >
         <FaChevronRight size={24} />
       </button>
-  
+
       {/* Dots Indicator */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
         {images.map((_, index) => (
@@ -59,7 +78,7 @@ function Carousel() {
         ))}
       </div>
     </div>
-  );  
+  );
 }
 
 export default Carousel;
