@@ -2,7 +2,7 @@ import logo from "../assets/logo5.png";
 
 function Navbar() { 
   return (
-    <nav className="w-full bg-black text-white fixed top-0 left-0 shadow-lg z-10 font-oswald">
+    <nav className="w-full bg-black text-white fixed top-0 left-0 shadow-lg z-30 font-oswald">
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-20">
         
         {/* Left - Logo */}
