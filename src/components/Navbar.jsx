@@ -1,6 +1,16 @@
+import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo5.png";
 
 function Navbar() { 
+  const location = useLocation();
+
+  const handleHomeClick = (e) => {
+    if (location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <nav className="w-full bg-black text-white fixed top-0 left-0 shadow-lg z-30 font-oswald">
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-20">
@@ -13,10 +23,10 @@ function Navbar() {
 
         {/* Center - Navigation Links */}
         <div className="flex space-x-8 text-lg font-semibold">
-          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer"><a href="#content">Home</a></div>
-          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer"><a>Menu</a></div>
-          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer"><a>Reserve</a></div>
-          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer"><a>Takeaway</a></div>
+          <Link to="/" onClick={handleHomeClick} className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Home</Link>
+          <Link to="/menu" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Menu</Link>
+          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Reserve</div>
+          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Takeaway</div>
         </div>
 
       </div>

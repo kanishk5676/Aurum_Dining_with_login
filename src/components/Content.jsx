@@ -1,8 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import table from "../assets/reserve-table.avif";
 import food5 from "../assets/food5.avif";
 
 const Content=()=>{
+
+  const navigate = useNavigate(); 
+
   return (
     <div id="content" className="bg-black text-white py-16 px-4 md:px-8 lg:px-16">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8 items-center">
@@ -38,7 +42,8 @@ const Content=()=>{
             Enjoy the flavors of Aurum's Kitchen with ease—place a special order and savor your favorites just the way you like. 
             Whether you choose to pick up your meal or have it delivered straight to your doorstep in just 20 minutes, we bring the luxury of fine dining to you.
             </p>
-            <button className="bg-[#B8860B] text-white px-6 py-3 rounded-md uppercase font-semibold hover:bg-[#9C7A40] transition duration-300">
+            <button className="bg-[#B8860B] text-white px-6 py-3 rounded-md uppercase font-semibold hover:bg-[#9C7A40] transition duration-300"
+            onClick={() => navigate("/menu")}>
               Order Now
             </button>
           </div>
