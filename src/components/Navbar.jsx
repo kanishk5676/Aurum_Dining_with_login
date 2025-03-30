@@ -16,7 +16,7 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-20">
         
         {/* Left - Logo */}
-        <div className="h-full flex items-center ml-[-60px]">
+        <div className="h-full flex items-center ml-[-35px]">
           <img src={logo} alt="Logo" className="h-14" />
           <p className="text-5xl pb-4 font-trajan">Aurum Dining</p>
         </div>
@@ -25,8 +25,8 @@ function Navbar() {
         <div className="flex space-x-8 text-lg font-semibold">
           <Link to="/" onClick={handleHomeClick} className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Home</Link>
           <Link to="/menu" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Menu</Link>
-          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Reserve</div>
-          <div className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Takeaway</div>
+          <Link to="/reserve" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Reserve</Link>
+          <Link to="/takeaway" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Takeaway</Link>
         </div>
 
       </div>

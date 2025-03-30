@@ -24,29 +24,29 @@ function Carousel() {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-[#242424] z-10">
-      {/* Image Container */}
-      <div className="absolute inset-0 w-full h-full">
-        <img
-          src={images[currentIndex].src}
-          alt="carousel"
-          className="w-full h-full object-cover"
-        />
-
-        {/* Text Overlay - Aligned to Left & Styled */}
-        <div className="absolute top-1/3 left-16 md:left-32 text-white text-left">
-          {/* Title - Stacked Words */}
-          <div className="flex flex-col text-6xl font-bold uppercase tracking-wide drop-shadow-lg">
-            {images[currentIndex].title.map((word, index) => (
-              <span key={index}>{word}</span>
-            ))}
+    <div className="relative w-screen h-screen overflow-hidden">
+      {/* Image Slider Container */}
+      <div
+        className="flex transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${currentIndex * 100}vw)` }}
+      >
+        {images.map((image, index) => (
+          <div key={index} className="w-screen flex-shrink-0 relative">
+            <img src={image.src} alt="carousel" className="w-full h-screen object-cover" />
           </div>
-          
-          {/* Subtitle - Slightly Smaller and Stylish */}
-          <p className="text-xl mt-4 drop-shadow-md px-4 py-2 rounded-md font-montserrat">
-            {images[currentIndex].subtitle}
-          </p>
+        ))}
+      </div>
+
+      {/* Conditional Rendering: Show Text Only for Active Image */}
+      <div className="absolute top-1/3 left-16 md:left-32 text-white text-left">
+        <div className="flex flex-col text-6xl font-bold uppercase tracking-wide drop-shadow-lg">
+          {images[currentIndex].title.map((word, i) => (
+            <span key={i}>{word}</span>
+          ))}
         </div>
+        <p className="text-xl mt-4 drop-shadow-md px-4 py-2 rounded-md font-montserrat">
+          {images[currentIndex].subtitle}
+        </p>
       </div>
 
       {/* Left Arrow */}
