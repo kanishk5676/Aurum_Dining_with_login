@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import bgImage from "/images/hk-background.png";
-import Navbar from "/src/pages/Navbar.jsx";
+import Navbar from "./Navbar.jsx";
 
 const TableSelection = () => {
   const location = useLocation();
