@@ -1,12 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import background from "/images/hk-background.png";
 
 function Takeaway() {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("brunch");
   const [order, setOrder] = useState({});
   const [userName, setUserName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Menu Data
   const menuItems = {
@@ -58,9 +62,90 @@ function Takeaway() {
   // Calculate billing amounts
   const subtotal = Object.values(order).reduce((total, item) => total + item.qty * item.price, 0);
   const tax = subtotal * 0.05;
+  const acTax = subtotal * 0.02;
+  const gst = subtotal * 0.08;
   const deliveryCharge = subtotal > 500 ? 0 : 50;
-  const total = subtotal + tax + subtotal * 0.02 + subtotal * 0.08 + deliveryCharge;
+  const total = subtotal + tax + acTax + gst + deliveryCharge;
 
+  // Format order items for API submission
+  const formatOrderItems = () => {
+    return Object.entries(order).map(([itemName, details]) => ({
+      name: itemName,
+      quantity: details.qty,
+      price: details.price
+    }));
+  };
+
+  // Validate form inputs
+  const validateForm = () => {
+    if (userName.trim() === "") {
+      setErrorMessage("Please enter your name");
+      return false;
+    }
+    if (phone.trim() === "" || !/^\d{10}$/.test(phone)) {
+      setErrorMessage("Please enter a valid 10-digit phone number");
+      return false;
+    }
+    if (address.trim() === "") {
+      setErrorMessage("Please enter your delivery address");
+      return false;
+    }
+    if (Object.keys(order).length === 0) {
+      setErrorMessage("Please add at least one item to your order");
+      return false;
+    }
+    setErrorMessage("");
+    return true;
+  };
+
+  // Handle order submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const orderData = {
+        fullName: userName,
+        phone: phone,
+        address: address,
+        items: formatOrderItems(),
+        subtotal: subtotal,
+        tax: tax,
+        acTax: acTax,
+        gst: gst,
+        deliveryCharge: deliveryCharge,
+        total: total
+      };
+      
+      const response = await fetch('http://localhost:5001/takeaway', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Order submission failed');
+      }
+      
+      const data = await response.json();
+      
+      // Redirect to order confirmation page with orderId
+      navigate(`/order-confirmation/${data.orderId}`);
+      
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      setErrorMessage("Failed to place order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <div
       className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col py-12 px-6 mt-16"
@@ -120,9 +205,9 @@ function Takeaway() {
                   >
                     -
                   </button>
-                    <span className="px-5 py-2 text-lg bg-gray-900 text-white font-semibold shadow-inner rounded-full">
+                  <span className="px-5 py-2 text-lg bg-gray-900 text-white font-semibold shadow-inner rounded-full">
                     {order[item.name]?.qty || 0}
-                    </span>
+                  </span>
                   <button
                     className="px-4 py-2 rounded-r-md font-medium text-lg shadow-2xl transition"
                     onClick={() => updateOrder(item, "add")}
@@ -137,23 +222,59 @@ function Takeaway() {
 
         {/* Right: Billing Section */}
         <div className="md:w-1/3 w-full bg-black/30 p-6 rounded-lg shadow-lg border border-white mt-8 md:mt-0">
-          <h2 className="text-lg font-bold text-center mb-4">Your Details</h2>
-          <input type="text" placeholder="Your Name" className="w-full p-2 mb-4 rounded bg-gray-800 text-white" />
-          <input type="text" placeholder="Phone Number" className="w-full p-2 mb-4 rounded bg-gray-800 text-white" />
-          <input type="text" placeholder="Delivery Address" className="w-full p-2 mb-6 rounded bg-gray-800 text-white" />
+          <form onSubmit={handleSubmit}>
+            <h2 className="text-lg font-bold text-center mb-4">Your Details</h2>
+            {errorMessage && (
+              <div className="bg-red-600 text-white p-2 mb-4 rounded text-sm">
+                {errorMessage}
+              </div>
+            )}
+            <input 
+              type="text" 
+              placeholder="Your Name" 
+              className="w-full p-2 mb-4 rounded bg-gray-800 text-white" 
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              required
+            />
+            <input 
+              type="text" 
+              placeholder="Phone Number" 
+              className="w-full p-2 mb-4 rounded bg-gray-800 text-white" 
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              pattern="\d{10}"
+              required
+            />
+            <input 
+              type="text" 
+              placeholder="Delivery Address" 
+              className="w-full p-2 mb-4 rounded bg-gray-800 text-white" 
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className={`w-full p-3 mt-4 rounded-lg font-semibold transition bg-[#B8860B] text-black hover:bg-[#D4AF37] ${
+                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Place Order"}
+            </button>
+          </form>
 
-          <h2 className="text-lg font-bold text-center mb-2">Billing Summary</h2>
-          <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
-          <p>Tax (5%): ₹{tax.toFixed(2)}</p>
-          <p>AC Tax (2%): ₹{(subtotal * 0.02).toFixed(2)}</p>
-          <p>GST (8%): ₹{(subtotal * 0.08).toFixed(2)}</p>
-          <p>Delivery Charge: {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge}`}</p>
-          <hr className="my-2 border-gray-400" />
-          <p className="text-lg font-semibold">Total: ₹{total.toFixed(2)}</p>
-
-          <button className="w-full mt-4 px-5 py-2 bg-[#B8860B] text-black font-bold text-lg rounded-lg">
-            Place Order
-          </button>
+          {/* Billing Summary */}
+          <div className="mt-6 text-lg font-semibold">
+            <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
+            <p>Tax (5%): ₹{tax.toFixed(2)}</p>
+            <p>AC Tax (2%): ₹{acTax.toFixed(2)}</p>
+            <p>GST (8%): ₹{gst.toFixed(2)}</p>
+            <p>Delivery Charge: ₹{deliveryCharge.toFixed(2)}</p>
+            <hr className="my-4" />
+            <p>Total: ₹{total.toFixed(2)}</p>
+          </div>
         </div>
       </div>
     </div>
