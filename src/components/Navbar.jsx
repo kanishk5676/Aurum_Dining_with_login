@@ -25,8 +25,8 @@ function Navbar() {
         <div className="flex space-x-8 text-lg font-semibold">
           <Link to="/" onClick={handleHomeClick} className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Home</Link>
           <Link to="/menu" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Menu</Link>
-          <Link to="/reserve" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Reserve</Link>
-          <Link to="/takeaway" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Takeaway</Link>
+          <Link to="/select-date-time" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Reserve</Link>
+          <Link to="/order-takeaway" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Takeaway</Link>
         </div>
 
       </div>

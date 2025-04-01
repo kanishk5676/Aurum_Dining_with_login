@@ -58,7 +58,7 @@ const DateTimeSelection = () => {
         {/* Proceed Button */}
         <button
           onClick={handleProceed}
-          className="mt-4 p-4 bg-green-500 text-white text-2xl rounded-md w-full sm:w-96 hover:bg-green-600"
+          className="mt-4 p-4 bg-[#8C7427] text-white text-2xl rounded-md w-full sm:w-96"
         >
           Proceed
         </button>

@@ -103,17 +103,16 @@ const TableSelection = () => {
         alert("Reservation failed. Try again.");
       });
   };
-  
- 
 
   return (
     <div
       className="flex justify-between items-start min-h-screen bg-repeat bg-[length:100px_100px] bg-center p-10"
-      style={{ backgroundImage: `url(${bgImage})` }}
+      style={{ backgroundImage: `url(${bgImage})`}}
     >
       <Navbar />
 
-      <div className="grid grid-cols-5 gap-8 w-[600px] min-h-[650px] p-20 pb-24 bg-[url('./images/frame6.jpg')] bg-cover bg-center bg-padding-box rounded-lg shadow-lg">
+      {/* Table Selection Area */}
+      <div className="grid grid-cols-5 gap-8 w-[600px] min-h-[650px] p-20 pb-24 bg-cover bg-center bg-padding-box rounded-lg shadow-lg">
         {tables.map((table) => (
           <button
             key={table.id}
@@ -130,8 +129,9 @@ const TableSelection = () => {
         ))}
       </div>
 
-      <div className="w-[400px] bg-white p-8 shadow-lg rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Customer Details</h2>
+      {/* Customer Details Form */}
+      <div className="w-[400px] bg-black/30 backdrop-blur-md p-8 shadow-lg rounded-lg mt-10">       
+      <h2 className="text-4xl font-semibold mb-4 text-white">Customer Details</h2>
 
         <input
           type="text"
@@ -140,7 +140,7 @@ const TableSelection = () => {
           value={formData.fullName}
           onChange={handleChange}
           required
-          className="w-full p-3 border rounded mb-4"
+          className="w-full p-3 border rounded mb-12 bg-black text-white"
         />
 
         <input
@@ -150,7 +150,7 @@ const TableSelection = () => {
           value={formData.phone}
           onChange={handleChange}
           required
-          className="w-full p-3 border rounded mb-4"
+          className="w-full p-3 border rounded mb-12 bg-black text-white"
         />
 
         <input
@@ -160,16 +160,16 @@ const TableSelection = () => {
           value={formData.email}
           onChange={handleChange}
           required
-          className="w-full p-3 border rounded mb-4"
+          className="w-full p-3 border rounded mb-12 bg-black text-white"
         />
 
-        <label className="block font-medium mb-1">Number of Guests:</label>
+        <label className="block font-medium mb-1 text-white">Number of Guests:</label>
         <select
           name="guests"
           value={formData.guests}
           onChange={handleChange}
           required
-          className="w-full p-3 border rounded mb-4"
+          className="w-full p-3 border rounded mb-12 bg-black text-white"
         >
           {[...Array(20).keys()].map((num) => (
             <option key={num + 1} value={num + 1}>
@@ -178,14 +178,14 @@ const TableSelection = () => {
           ))}
         </select>
 
-        <label className="flex items-center mb-4">
+        <label className="flex items-center mb-12 text-white text-xl">
           <input
             type="checkbox"
             name="agree"
             checked={formData.agree}
             onChange={handleChange}
             required
-            className="mr-2"
+            className="mr-2 text-2xl"
           />
           I agree to the terms and conditions
         </label>

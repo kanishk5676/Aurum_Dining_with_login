@@ -43,7 +43,7 @@ function Menu() {
 
   return (
     <div
-      className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col items-center py-12 px-6 mt-16"
+      className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col items-center py-12 px-6"
       style={{ backgroundImage: `url(${background})` }}
     >
       {/* Menu Header */}

@@ -148,7 +148,7 @@ function Takeaway() {
   };
   return (
     <div
-      className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col py-12 px-6 mt-16"
+      className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col py-12 px-6"
       style={{ backgroundImage: `url(${background})` }}
     >
       <h1 className="text-3xl font-bold tracking-wide text-center">TAKEAWAY</h1>
