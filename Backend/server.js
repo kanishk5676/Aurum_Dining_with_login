@@ -79,14 +79,25 @@ app.post("/reserve", async (req, res) => {
   try {
     const { fullName, phone, email, date, time, guests, tables } = req.body;
     if (!fullName || !phone || !email || !date || !time || !guests || tables.length === 0) {
-      return res.status(400).json({ message: "All fields are required, including at least one table" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please fill in all required fields and select at least one table" 
+      });
     }
     const orderId = new mongoose.Types.ObjectId().toString();
     const newReservation = new Reservation({ orderId, fullName, phone, email, date, time, guests, tables });
     await newReservation.save();
-    res.status(201).json({ message: "Reservation successful", orderId });
+    res.status(201).json({ 
+      success: true, 
+      message: "Your table has been successfully reserved! Your reservation ID is " + orderId, 
+      orderId 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error saving reservation", error });
+    console.error("Error saving reservation:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "We couldn't complete your reservation at this time. Please try again later." 
+    });
   }
 });
 
@@ -107,16 +118,39 @@ app.get("/reservation/:orderId", async (req, res) => {
 // ✅ Save a Takeaway Order
 app.post("/takeaway", async (req, res) => {
   try {
-    const { fullName, phone, address, items, subtotal, tax, deliveryCharge, total } = req.body;
+    const { fullName, phone, address, items, subtotal, tax, acTax, gst, deliveryCharge, total } = req.body;
     if (!fullName || !phone || !address || !items.length || !subtotal || !total) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please fill in all required fields to complete your order" 
+      });
     }
     const orderId = new mongoose.Types.ObjectId().toString();
-    const newOrder = new TakeawayOrder({ orderId, fullName, phone, address, items, subtotal, tax, deliveryCharge, total });
+    const newOrder = new TakeawayOrder({ 
+      orderId, 
+      fullName, 
+      phone, 
+      address, 
+      items, 
+      subtotal, 
+      tax, 
+      acTax, 
+      gst, 
+      deliveryCharge, 
+      total 
+    });
     await newOrder.save();
-    res.status(201).json({ message: "Takeaway order placed successfully", orderId });
+    res.status(201).json({ 
+      success: true, 
+      message: "Your takeaway order has been successfully placed! You can track it with your order ID.", 
+      orderId 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error placing takeaway order", error });
+    console.error("Error saving takeaway order:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "We couldn't process your order at this time. Please try again later." 
+    });
   }
 });
 
@@ -176,13 +210,65 @@ app.delete("/reservation/:orderId", async (req, res) => {
       const takeawayResult = await TakeawayOrder.deleteOne({ orderId });
       
       if (takeawayResult.deletedCount === 0) {
-        return res.status(404).json({ message: "Order not found" });
+        return res.status(404).json({ 
+          success: false, 
+          message: "We couldn't find the order you're trying to cancel" 
+        });
       }
     }
     
-    res.json({ message: "Order deleted successfully" });
+    res.json({ 
+      success: true, 
+      message: "Your order has been successfully cancelled" 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting order", error: error.message });
+    console.error("Error deleting order:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "We couldn't cancel your order at this time. Please try again later." 
+    });
+  }
+});
+// Add this new endpoint to your server.js file for handling reservation updates
+
+// Update reservation
+app.put("/update-reservation", async (req, res) => {
+  try {
+    const { orderId, fullName, phone, email, date, time, guests, tables } = req.body;
+    
+    if (!orderId || !fullName || !phone || !email || !date || !time || !guests || !tables.length) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide all required fields" 
+      });
+    }
+
+    // First check if the reservation exists
+    const existingReservation = await Reservation.findOne({ orderId });
+    if (!existingReservation) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Reservation not found" 
+      });
+    }
+
+    // Update the reservation
+    await Reservation.updateOne(
+      { orderId }, 
+      { fullName, phone, email, date, time, guests, tables }
+    );
+
+    res.json({ 
+      success: true, 
+      message: "Your reservation has been successfully updated", 
+      orderId 
+    });
+  } catch (error) {
+    console.error("Error updating reservation:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "We couldn't update your reservation at this time. Please try again later." 
+    });
   }
 });
 

@@ -104,15 +104,13 @@ const UpdateOrDeleteOrder = () => {
         isUpdate: true
       }));
       
-      // Delete the existing reservation to free up tables
-      await axios.delete(`http://localhost:5001/reservation/${order.orderId}`);
-      
-      // FIXED: Navigate directly to the table reservation page with state
+      // FIXED: Don't delete the existing reservation here
+      // Just navigate to the table reservation page with the required state
       navigate("/reserve-table", {
         state: {
-          // Adding these state properties to prevent redirect to home
           date: order.date,
-          time: order.time
+          time: order.time,
+          isUpdateMode: true
         }
       });
     } catch (error) {

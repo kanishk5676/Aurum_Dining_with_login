@@ -7,13 +7,14 @@ import Navbar from "./Navbar";
 const TableSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { date, time } = location.state || {};
+  const { date, time, isUpdateMode: locationIsUpdateMode } = location.state || {};
 
   const [tables, setTables] = useState([]);
   const [reservedTables, setReservedTables] = useState([]);
   const [selectedTables, setSelectedTables] = useState([]);
-  const [isUpdateMode, setIsUpdateMode] = useState(false);
+  const [isUpdateMode, setIsUpdateMode] = useState(locationIsUpdateMode || false);
   const [updateData, setUpdateData] = useState(null);
+  const [originalOrderId, setOriginalOrderId] = useState(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -37,6 +38,9 @@ const TableSelection = () => {
         // Store the update data
         setUpdateData(parsedData);
         
+        // Store the original order ID for later use
+        setOriginalOrderId(parsedData.orderId);
+        
         // Pre-fill form fields
         setFormData({
           fullName: parsedData.fullName || "",
@@ -47,12 +51,9 @@ const TableSelection = () => {
         });
         
         // Pre-select tables
-        if (parsedData.tables) {
+        if (parsedData.tables && Array.isArray(parsedData.tables)) {
           setSelectedTables(parsedData.tables);
         }
-        
-        // Clear the localStorage after using it
-        localStorage.removeItem("updateOrderData");
       } catch (error) {
         console.error("Error parsing update data:", error);
       }
@@ -61,10 +62,16 @@ const TableSelection = () => {
 
   // Second useEffect - Load tables and reserved tables
   useEffect(() => {
-    // FIXED: Check if we have either location state data OR update data before redirecting
-    if (!isUpdateMode && !updateData && (!date || !time)) {
-      navigate("/");
-      return;
+    // Check if we have date and time from either location state or update data
+    const effectiveDate = isUpdateMode && updateData ? updateData.date : date;
+    const effectiveTime = isUpdateMode && updateData ? updateData.time : time;
+    
+    // If we don't have date/time information and we're not in update mode, redirect to home
+    if (!effectiveDate || !effectiveTime) {
+      if (!isUpdateMode || !updateData) {
+        navigate("/");
+        return;
+      }
     }
 
     // Fetch all available tables
@@ -72,26 +79,31 @@ const TableSelection = () => {
       setTables(response.data);
     });
 
-    // Use date and time from updateData if in update mode, otherwise use from location state
-    const queryDate = isUpdateMode && updateData ? updateData.date : date;
-    const queryTime = isUpdateMode && updateData ? updateData.time : time;
-
-    if (queryDate && queryTime) {
-      axios
-        .get(`http://localhost:5001/reserved-tables?date=${queryDate}&time=${queryTime}`)
-        .then((response) => {
-          // In update mode, don't mark the user's own tables as reserved
-          const filteredReservedTables = isUpdateMode && updateData && updateData.tables
-            ? response.data.filter(tableId => !updateData.tables.includes(tableId))
-            : response.data;
-          
-          setReservedTables(filteredReservedTables);
-        });
-    }
+    // Fetch reserved tables for the given date and time
+    axios
+      .get(`http://localhost:5001/reserved-tables?date=${effectiveDate}&time=${effectiveTime}`)
+      .then((response) => {
+        // Get all reserved tables
+        let allReservedTables = response.data;
+        
+        // If we're in update mode, don't consider the user's own tables as reserved
+        if (isUpdateMode && updateData && updateData.tables) {
+          allReservedTables = allReservedTables.filter(
+            tableId => !updateData.tables.includes(tableId)
+          );
+        }
+        
+        setReservedTables(allReservedTables);
+      })
+      .catch(error => {
+        console.error("Error fetching reserved tables:", error);
+      });
   }, [date, time, navigate, isUpdateMode, updateData]);
 
   const toggleTableSelection = (tableId) => {
+    // Don't allow selection of reserved tables
     if (reservedTables.includes(tableId)) return;
+    
     setSelectedTables((prev) =>
       prev.includes(tableId)
         ? prev.filter((id) => id !== tableId)
@@ -108,7 +120,7 @@ const TableSelection = () => {
     setFormData({ ...formData, [name]: newValue });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
   
     if (!formData.fullName || !formData.phone || !formData.email || !formData.agree) {
@@ -124,55 +136,63 @@ const TableSelection = () => {
       return;
     }
   
+    // Get the effective date and time
+    const effectiveDate = isUpdateMode && updateData ? updateData.date : date;
+    const effectiveTime = isUpdateMode && updateData ? updateData.time : time;
+    
     const reservationData = {
       fullName: formData.fullName,
       phone: formData.phone,
       email: formData.email,
       guests: Number(formData.guests),
-      date: isUpdateMode && updateData ? updateData.date : date,
-      time: isUpdateMode && updateData ? updateData.time : time,
+      date: effectiveDate,
+      time: effectiveTime,
       tables: selectedTables,
     };
 
-    // If in update mode, include the order ID for the update API call
-    if (isUpdateMode && updateData) {
-      reservationData.orderId = updateData.orderId;
+    try {
+      // If in update mode, we need to delete the old reservation and create a new one
+      if (isUpdateMode && originalOrderId) {
+        // Delete the existing reservation
+        await axios.delete(`http://localhost:5001/reservation/${originalOrderId}`);
+        
+        // Create a new reservation
+        const response = await axios.post("http://localhost:5001/reserve", reservationData);
+        const { orderId } = response.data;
+        
+        if (!orderId) {
+          alert("Update failed. No order ID received.");
+          return;
+        }
+        
+        // Navigate to confirmation page
+        navigate("/confirmation", {
+          state: { 
+            ...reservationData,
+            orderId,
+            isUpdated: true 
+          },
+        });
+      } else {
+        // Regular reservation flow
+        const response = await axios.post("http://localhost:5001/reserve", reservationData);
+        const { orderId } = response.data;
+        
+        if (!orderId) {
+          alert("Reservation failed. No order ID received.");
+          return;
+        }
+        
+        navigate("/confirmation", {
+          state: { orderId, ...reservationData },
+        });
+      }
       
-      axios
-        .put("http://localhost:5001/update-reservation", reservationData)
-        .then((response) => {
-          navigate("/confirmation", {
-            state: { 
-              ...reservationData,
-              orderId: updateData.orderId,
-              isUpdated: true 
-            },
-          });
-        })
-        .catch((err) => {
-          console.error("Error updating reservation:", err);
-          alert("Update failed. Please try again.");
-        });
-    } else {
-      // Regular reservation flow
-      axios
-        .post("http://localhost:5001/reserve", reservationData)
-        .then((response) => {
-          const { orderId } = response.data;
-          
-          if (!orderId) {
-            alert("Reservation failed. No order ID received.");
-            return;
-          }
-    
-          navigate("/confirmation", {
-            state: { orderId, ...reservationData },
-          });
-        })
-        .catch((err) => {
-          console.error("Error:", err);
-          alert("Reservation failed. Try again.");
-        });
+      // Clear the localStorage after successful submission
+      localStorage.removeItem("updateOrderData");
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Reservation failed. Try again.");
     }
   };
 
