@@ -24,7 +24,7 @@ function Carousel() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-full mx-auto h-screen overflow-hidden">
       {/* Image Slider Container */}
       <div
         className="flex transition-transform duration-500 ease-in-out"

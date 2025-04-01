@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import bgImage from "/images/hk-background.png"; // Import background image
-import food1 from "/images/food1.jpg"; // Import the food image for right side
+import bgImage from "/images/hk-background.png";
+import food1 from "/images/food1.jpg"; 
 
 const DateTimeSelection = () => {
   const [date, setDate] = useState(null);
@@ -16,12 +16,18 @@ const DateTimeSelection = () => {
       return;
     }
 
-    navigate("/reserve-table", { state: { date: date.toDateString(), time } }); // Navigate with state
+    // Navigate to the "Reserve Table" page with the selected date and time
+    navigate("/reserve-table", { state: { date: date.toDateString(), time } });
+  };
+
+  const handleManageReservation = () => {
+    // Navigate directly to the Update or Delete Order page
+    navigate("/update-or-delete-order");  // No orderId passed for now
   };
 
   return (
     <div
-      className="flex flex-col sm:flex-row items-start min-h-screen bg-repeat bg-[length:100px_100px] bg-center px-8 pt-24" // Added pt-24 for navbar offset
+      className="flex flex-col sm:flex-row items-start min-h-screen bg-repeat bg-[length:100px_100px] bg-center px-8 pt-24"
       style={{ backgroundImage: `url(${bgImage})` }} // Background image applied
     >
       {/* Left Side (Date & Time Picker) */}
@@ -62,14 +68,25 @@ const DateTimeSelection = () => {
         >
           Proceed
         </button>
+
+        {/* Modify or Cancel Reservation Link */}
+        <p className="text-white text-center mt-4 flex items-center justify-start space-x-2 w-full sm:w-auto">
+          <span>Modify or cancel your reservation?</span>
+          <a
+            onClick={handleManageReservation} // Use the function to navigate to the UpdateOrDeleteOrder page
+            className="text-blue-400 underline ml-1 hover:text-blue-600 cursor-pointer"
+          >
+            Manage Reservation
+          </a>
+        </p>
       </div>
 
       {/* Right Side (Image with Text) */}
-      <div className="flex flex-col items-center justify-center w-full sm:w-1/2 relative min-h-[500px]"> {/* Set min height */}
+      <div className="flex flex-col items-center justify-center w-full sm:w-1/2 relative min-h-[500px]">
         <div
           className="absolute top-0 left-0 w-full h-full"
           style={{
-            backgroundImage: `url(${food1})`, // Image applied here
+            backgroundImage: `url(${food1})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
