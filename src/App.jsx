@@ -9,6 +9,8 @@ import DateTimeSelection from "./components/DateTimeSelection";
 import OrderConfirmation from "./components/OrderConfirmation";
 import ResConfirmation from "./components/ResConfirmation";
 import UpdateOrDeleteOrder from "./components/UpdateDelete";
+import AdminLogin from "./components/AdminLogin";
+import AdminDashboard from "./components/AdminDashboard";
 import bgImage from "/images/hk-background.png";
 
 
@@ -26,11 +28,12 @@ function AnimatedRoutes() {
         <Route path="/order-takeaway" element={<PageWrapper><Takeaway /></PageWrapper>} />
         <Route path="/order-confirmation/:orderId" element={<PageWrapper><OrderConfirmation /></PageWrapper>} />
         <Route path="/update-or-delete-order" element={<PageWrapper><UpdateOrDeleteOrder /></PageWrapper>} />
+        <Route path="/admin-login" element={<PageWrapper><AdminLogin /></PageWrapper>} />
+        <Route path="/admin-dashboard" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );
 }
-
 
 const PageWrapper=({children})=>
   (

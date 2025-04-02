@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import background from "/images/hk-background.png";
 
 function Menu() {
   const [selectedCategory, setSelectedCategory] = useState("brunch");
+  const navigate = useNavigate();
 
   // Menu Data
   const menuItems = {
@@ -43,7 +45,7 @@ function Menu() {
 
   return (
     <div
-      className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col items-center py-12 px-6"
+      className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col items-center py-12 px-6 "
       style={{ backgroundImage: `url(${background})` }}
     >
       {/* Menu Header */}
@@ -98,6 +100,14 @@ function Menu() {
           ))}
         </div>
       </div>
+
+      {/* Order Now Button */}
+      <button
+        onClick={() => navigate("/order-takeaway")}
+        className="mt-12 bg-[#B8860B] text-white font-medium text-lg px-10 py-3 rounded-lg shadow-md transition hover:bg-[#d4a017]"
+      >
+        Order Now
+      </button>
     </div>
   );
 }

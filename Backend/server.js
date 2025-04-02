@@ -272,6 +272,59 @@ app.put("/update-reservation", async (req, res) => {
   }
 });
 
+// Fetch all reservations (for admin panel)
+app.get("/admin/reservations", async (req, res) => {
+  try {
+    const reservations = await Reservation.find().sort({ createdAt: -1 });
+    res.json(reservations);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching reservations", error });
+  }
+});
+
+// Fetch all takeaway orders (for admin panel)
+app.get("/admin/takeaway-orders", async (req, res) => {
+  try {
+    const orders = await TakeawayOrder.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching takeaway orders", error });
+  }
+});
+
+ // Cancel a reservation (for admin panel)
+ app.delete("/admin/reservations/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const deletedReservation = await Reservation.findOneAndDelete({ orderId });
+    
+    if (!deletedReservation) {
+      return res.status(404).json({ message: "Reservation not found" });
+    }
+    
+    res.json({ message: "Reservation cancelled successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error cancelling reservation", error });
+  }
+});
+
+// Cancel a takeaway order (for admin panel)
+app.delete("/admin/takeaway-orders/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const deletedOrder = await TakeawayOrder.findOneAndDelete({ orderId });
+    
+    if (!deletedOrder) {
+      return res.status(404).json({ message: "Takeaway order not found" });
+    }
+    
+    res.json({ message: "Takeaway order cancelled successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error cancelling takeaway order", error });
+  }
+});
+
+
 // ✅ Start the server
 const PORT = 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

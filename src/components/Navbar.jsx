@@ -1,8 +1,10 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import logo from "../assets/logo5.png";
 
-function Navbar() { 
+function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleHomeClick = (e) => {
     if (location.pathname === "/") {
@@ -22,11 +24,29 @@ function Navbar() {
         </div>
 
         {/* Center - Navigation Links */}
-        <div className="flex space-x-8 text-lg font-semibold">
-          <Link to="/" onClick={handleHomeClick} className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Home</Link>
-          <Link to="/menu" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Menu</Link>
-          <Link to="/select-date-time" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Reserve</Link>
-          <Link to="/order-takeaway" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">Takeaway</Link>
+        <div className="flex items-center space-x-8 text-lg font-semibold">
+          <Link to="/" onClick={handleHomeClick} className="hover:text-[#8C7427] transition duration-300 cursor-pointer">
+            Home
+          </Link>
+          <Link to="/menu" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">
+            Menu
+          </Link>
+          <Link to="/select-date-time" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">
+            Reserve
+          </Link>
+          <Link to="/order-takeaway" className="hover:text-[#8C7427] transition duration-300 cursor-pointer">
+            Takeaway
+          </Link>
+          
+          {/* Fixed Admin Button Alignment */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 h-10 rounded-md font-medium transition-colors duration-300 flex items-center justify-center"
+            onClick={() => navigate('/admin-login')}
+          >
+            Admin
+          </motion.button>
         </div>
 
       </div>

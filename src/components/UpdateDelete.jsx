@@ -14,7 +14,6 @@ const UpdateOrDeleteOrder = () => {
   
   // Confirmation dialog state
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [deleteType, setDeleteType] = useState("reservation");
   const [orderToDelete, setOrderToDelete] = useState(null);
 
   // Function to handle search and fetch orders based on phone number
@@ -48,9 +47,11 @@ const UpdateOrDeleteOrder = () => {
 
   // Function to initialize the delete confirmation
   const confirmDelete = (order) => {
-    setOrderToDelete(order);
-    setDeleteType(order.items ? "takeaway order" : "reservation");
-    setShowConfirmation(true);
+    // Only allow cancellation for table reservations (orders without items)
+    if (!order.items) {
+      setOrderToDelete(order);
+      setShowConfirmation(true);
+    }
   };
 
   // Function to cancel delete operation
@@ -65,10 +66,8 @@ const UpdateOrDeleteOrder = () => {
     
     setLoading(true);
     try {
-      // Determine endpoint based on order type
-      const endpoint = orderToDelete.items 
-        ? `http://localhost:5001/takeaway/${orderToDelete.orderId}`
-        : `http://localhost:5001/reservation/${orderToDelete.orderId}`;
+      // Only delete table reservations
+      const endpoint = `http://localhost:5001/reservation/${orderToDelete.orderId}`;
       
       const response = await axios.delete(endpoint);
       
@@ -76,11 +75,11 @@ const UpdateOrDeleteOrder = () => {
         // Remove the deleted order from the local state
         setOrders(prevOrders => prevOrders.filter(order => order.orderId !== orderToDelete.orderId));
       } else {
-        throw new Error("Failed to cancel the order");
+        throw new Error("Failed to cancel the reservation");
       }
     } catch (error) {
-      console.error("Error cancelling order:", error);
-      setError("There was an error cancelling your order. Please try again.");
+      console.error("Error cancelling reservation:", error);
+      setError("There was an error cancelling your reservation. Please try again.");
     } finally {
       setLoading(false);
       setShowConfirmation(false);
@@ -176,7 +175,8 @@ const UpdateOrDeleteOrder = () => {
                         <th className="px-4 py-3 rounded-tl-md">Order ID</th>
                         <th className="px-4 py-3">Name</th>
                         <th className="px-4 py-3">Date & Time</th>
-                        <th className="px-4 py-3">Tables</th>
+                        <th className="px-4 py-3">Type</th>
+                        <th className="px-4 py-3">Details</th>
                         <th className="px-4 py-3 rounded-tr-md">Actions</th>
                       </tr>
                     </thead>
@@ -195,28 +195,39 @@ const UpdateOrDeleteOrder = () => {
                             {order.date} at {order.time}
                           </td>
                           <td className="px-4 py-3 border-b border-gray-700">
-                            {order.tables ? order.tables.join(", ") : "N/A"}
+                            {order.items ? "Takeaway" : "Table Reservation"}
+                          </td>
+                          <td className="px-4 py-3 border-b border-gray-700">
+                            {order.items ? `${order.items.length} item(s)` : 
+                             (order.tables ? `Tables: ${order.tables.join(", ")}` : "N/A")}
                           </td>
                           <td className="px-4 py-3 border-b border-gray-700">
                             <div className="flex space-x-2">
                               {!order.items && (
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleUpdateOrder(order)}
-                                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                                >
-                                  Update
-                                </motion.button>
+                                <>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleUpdateOrder(order)}
+                                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                                  >
+                                    Update
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => confirmDelete(order)}
+                                    className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                                  >
+                                    Cancel
+                                  </motion.button>
+                                </>
                               )}
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => confirmDelete(order)}
-                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-                              >
-                                Cancel
-                              </motion.button>
+                              {order.items && (
+                                <span className="px-3 py-1 bg-gray-600 text-white text-sm rounded opacity-50">
+                                  Cannot Cancel
+                                </span>
+                              )}
                             </div>
                           </td>
                         </motion.tr>
@@ -243,7 +254,7 @@ const UpdateOrDeleteOrder = () => {
             <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
               <h3 className="text-xl font-bold mb-4 text-white">Confirm Cancellation</h3>
               <p className="text-gray-300 mb-6">
-                Are you sure you want to cancel this {deleteType}? This action cannot be undone.
+                Are you sure you want to cancel this table reservation? This action cannot be undone.
               </p>
               <div className="flex justify-end gap-4">
                 <motion.button
