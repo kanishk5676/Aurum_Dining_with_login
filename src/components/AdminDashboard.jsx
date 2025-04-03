@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import ReservationsBarChart from './ReservationsBarChart'; 
 
 const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -12,13 +13,11 @@ const AdminDashboard = () => {
   const [deleteType, setDeleteType] = useState('');
   const navigate = useNavigate();
   
-  // Check if admin is authenticated
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
     if (!isAuthenticated) {
       navigate('/');
     } else {
-      // Fetch data
       fetchOrders();
       fetchReservations();
     }
@@ -59,7 +58,6 @@ const AdminDashboard = () => {
   const handleOrderCancel = async () => {
     try {
       await axios.delete(`http://localhost:5001/admin/takeaway-orders/${itemToDelete}`);
-      // Refresh orders after cancellation
       fetchOrders();
       setShowConfirmation(false);
       setItemToDelete(null);
@@ -71,7 +69,6 @@ const AdminDashboard = () => {
   const handleReservationCancel = async () => {
     try {
       await axios.delete(`http://localhost:5001/admin/reservations/${itemToDelete}`);
-      // Refresh reservations after cancellation
       fetchReservations();
       setShowConfirmation(false);
       setItemToDelete(null);
@@ -155,7 +152,10 @@ const AdminDashboard = () => {
         </div>
       </div>
       
-      {/* Confirmation Dialog */}
+      <div className="mt-6">
+        <ReservationsBarChart reservations={reservations} />
+      </div>
+      
       {showConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
@@ -188,7 +188,6 @@ const AdminDashboard = () => {
   );
 };
 
-// OrderCard component
 const OrderCard = ({ order, onCancel }) => {
   return (
     <div className="bg-gray-900 rounded-lg shadow p-4 border-l-4 border-yellow-500">
