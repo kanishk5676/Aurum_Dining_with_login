@@ -7,7 +7,7 @@ import Navbar from "./Navbar";
 const TableSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { date, time, isUpdateMode: locationIsUpdateMode } = location.state || {};
+  const { date, time, guests, isUpdateMode: locationIsUpdateMode } = location.state || {};
 
   const [tables, setTables] = useState([]);
   const [reservedTables, setReservedTables] = useState([]);
@@ -15,14 +15,36 @@ const TableSelection = () => {
   const [isUpdateMode, setIsUpdateMode] = useState(locationIsUpdateMode || false);
   const [updateData, setUpdateData] = useState(null);
   const [originalOrderId, setOriginalOrderId] = useState(null);
+  const [user, setUser] = useState(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
     email: "",
-    guests: "1",
+    guests: guests ? String(guests) : "1",
     agree: false,
   });
+
+  // Check if user is logged in
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      
+      // Pre-fill form with user data
+      setFormData(prev => ({
+        ...prev,
+        fullName: parsedUser.fullName || prev.fullName,
+        phone: parsedUser.phone || prev.phone,
+        email: parsedUser.email || prev.email
+      }));
+    } else {
+      // If not logged in, show login prompt
+      setShowLoginPrompt(true);
+    }
+  }, []);
 
   // First useEffect - Check for update data in localStorage
   useEffect(() => {
@@ -62,6 +84,9 @@ const TableSelection = () => {
 
   // Second useEffect - Load tables and reserved tables
   useEffect(() => {
+    // Check if user is logged in
+    if (!user) return;
+
     // Check if we have date and time from either location state or update data
     const effectiveDate = isUpdateMode && updateData ? updateData.date : date;
     const effectiveTime = isUpdateMode && updateData ? updateData.time : time;
@@ -69,7 +94,7 @@ const TableSelection = () => {
     // If we don't have date/time information and we're not in update mode, redirect to home
     if (!effectiveDate || !effectiveTime) {
       if (!isUpdateMode || !updateData) {
-        navigate("/");
+        navigate("/select-date-time");
         return;
       }
     }
@@ -98,7 +123,12 @@ const TableSelection = () => {
       .catch(error => {
         console.error("Error fetching reserved tables:", error);
       });
-  }, [date, time, navigate, isUpdateMode, updateData]);
+  }, [date, time, navigate, isUpdateMode, updateData, user]);
+
+  // Navigate to login
+  const handleRedirectToLogin = () => {
+    navigate('/login?redirect=reserve-table');
+  };
 
   const toggleTableSelection = (tableId) => {
     // Don't allow selection of reserved tables
@@ -123,6 +153,12 @@ const TableSelection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
+    // Check if user is logged in
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     if (!formData.fullName || !formData.phone || !formData.email || !formData.agree) {
       alert("Please fill in all required fields.");
       return;
@@ -148,6 +184,7 @@ const TableSelection = () => {
       date: effectiveDate,
       time: effectiveTime,
       tables: selectedTables,
+      userId: user.id // Add user ID to link reservation to user account
     };
 
     try {
@@ -196,6 +233,27 @@ const TableSelection = () => {
     }
   };
 
+  // If not logged in, show login prompt
+  if (showLoginPrompt) {
+    return (
+      <div
+        className="min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col items-center justify-center p-4"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
+        <div className="max-w-md w-full bg-black/30 p-8 rounded-xl border border-white shadow-xl text-center">
+          <h1 className="text-3xl font-bold mb-6">Login Required</h1>
+          <p className="mb-8">You need to be logged in to reserve a table.</p>
+          <button
+            onClick={handleRedirectToLogin}
+            className="w-full py-3 bg-[#B8860B] text-black rounded-lg font-semibold hover:bg-yellow-600 transition"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex justify-between items-start min-h-screen bg-repeat bg-[length:100px_100px] bg-center p-10"
@@ -205,6 +263,14 @@ const TableSelection = () => {
 
       {/* Table Selection Area */}
       <div className="grid grid-cols-5 gap-8 w-[600px] min-h-[650px] p-20 pb-24 bg-[url('./images/frame6.jpg')] bg-cover bg-center bg-padding-box rounded-lg shadow-lg">
+        <div className="col-span-5 mb-4 text-center text-white text-xl">
+          <h3>Please select a table</h3>
+          <div className="flex justify-center space-x-6 mt-4">
+            <div className="flex items-center"><div className="w-4 h-4 bg-green-500 mr-2"></div> Available</div>
+            <div className="flex items-center"><div className="w-4 h-4 bg-yellow-500 mr-2"></div> Selected</div>
+            <div className="flex items-center"><div className="w-4 h-4 bg-red-500 mr-2"></div> Reserved</div>
+          </div>
+        </div>
         {tables.map((table) => (
           <button
             key={table.id}

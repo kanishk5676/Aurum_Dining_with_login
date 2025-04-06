@@ -1,29 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import background from "/images/hk-background.png";
 
 function DateTimeSelection() {
   const navigate = useNavigate();
-  const [date, setDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
   const [time, setTime] = useState("");
   const [guests, setGuests] = useState(2);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [user, setUser] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Generate options for date selection (next 30 days)
-  const dateOptions = [...Array(30)].map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return {
-      value: d.toISOString().split("T")[0],
-      label: d.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      }),
-    };
-  });
+  // Calculate min and max dates (today and 30 days from now)
+  const today = new Date();
+  const maxDate = new Date();
+  maxDate.setDate(today.getDate() + 30);
 
   // Time options for reservation
   const timeOptions = [
@@ -40,11 +33,23 @@ function DateTimeSelection() {
     const userData = localStorage.getItem('user');
     if (userData) {
       setUser(JSON.parse(userData));
+    } else {
+      // Redirect to login if not logged in
+      setShowLoginPrompt(true);
+    }
+
+    // Restore any pending reservation from session storage
+    const pendingReservation = sessionStorage.getItem('pendingReservation');
+    if (pendingReservation) {
+      const { date, time, guests } = JSON.parse(pendingReservation);
+      if (date) setSelectedDate(new Date(date));
+      if (time) setTime(time);
+      if (guests) setGuests(guests);
     }
   }, []);
 
   const handleContinue = () => {
-    if (!date || !time) {
+    if (!selectedDate || !time) {
       setErrorMessage("Please select both date and time");
       return;
     }
@@ -54,6 +59,9 @@ function DateTimeSelection() {
       return;
     }
 
+    // Format date as yyyy-mm-dd
+    const date = selectedDate.toISOString().split("T")[0];
+
     // Store reservation details in sessionStorage
     sessionStorage.setItem("reservationDetails", JSON.stringify({
       date,
@@ -62,13 +70,22 @@ function DateTimeSelection() {
     }));
 
     // Navigate to table selection page
-    navigate("/reserve-table");
+    navigate("/reserve-table", { 
+      state: { 
+        date,
+        time,
+        guests
+      }
+    });
   };
 
   // Navigate to login page
   const handleRedirectToLogin = () => {
     // Store selected date/time in session storage
-    sessionStorage.setItem('pendingReservation', JSON.stringify({ date, time, guests }));
+    if (selectedDate) {
+      const date = selectedDate.toISOString().split("T")[0];
+      sessionStorage.setItem('pendingReservation', JSON.stringify({ date, time, guests }));
+    }
     navigate('/login?redirect=select-date-time');
   };
 
@@ -134,18 +151,18 @@ function DateTimeSelection() {
 
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">Select Date</label>
-          <select
+          <DatePicker
+            selected={selectedDate}
+            onChange={date => setSelectedDate(date)}
+            minDate={today}
+            maxDate={maxDate}
+            placeholderText="Click to select a date"
+            dateFormat="MMMM d, yyyy"
             className="w-full p-3 bg-gray-800 rounded text-white"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          >
-            <option value="">Choose a date</option>
-            {dateOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            wrapperClassName="w-full"
+            disabled={!user}
+            calendarClassName="bg-gray-800 border border-gray-700 text-white"
+          />
         </div>
 
         <div className="mb-6">
@@ -154,6 +171,7 @@ function DateTimeSelection() {
             className="w-full p-3 bg-gray-800 rounded text-white"
             value={time}
             onChange={(e) => setTime(e.target.value)}
+            disabled={!user}
           >
             <option value="">Choose a time</option>
             {timeOptions.map((time) => (
@@ -170,6 +188,7 @@ function DateTimeSelection() {
             <button
               className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl"
               onClick={() => setGuests(Math.max(1, guests - 1))}
+              disabled={!user}
             >
               -
             </button>
@@ -177,6 +196,7 @@ function DateTimeSelection() {
             <button
               className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl"
               onClick={() => setGuests(Math.min(20, guests + 1))}
+              disabled={!user}
             >
               +
             </button>
@@ -184,8 +204,9 @@ function DateTimeSelection() {
         </div>
 
         <button
-          className="w-full py-3 bg-[#B8860B] text-black rounded-lg font-semibold hover:bg-yellow-600 transition"
+          className={`w-full py-3 ${user ? 'bg-[#B8860B] hover:bg-yellow-600' : 'bg-gray-600 cursor-not-allowed'} text-black rounded-lg font-semibold transition`}
           onClick={handleContinue}
+          disabled={!user}
         >
           Continue to Table Selection
         </button>
