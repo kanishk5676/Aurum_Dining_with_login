@@ -480,6 +480,252 @@ app.delete("/admin/takeaway-orders/:orderId", async (req, res) => {
   }
 });
 
+// Add to server.js
+
+// Food Item Schema
+const foodItemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  price: { type: Number, required: true },
+  category: { 
+    type: String, 
+    required: true,
+    enum: ['brunch', 'lunch', 'dinner', 'dessert', 'drinks']
+  },
+  imageUrl: { type: String, default: "/api/placeholder/300/200" },
+  isAvailable: { type: Boolean, default: true },
+  isPopular: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const FoodItem = mongoose.model("FoodItem", foodItemSchema);
+
+// API Routes for Food Items
+
+// Get all food items
+app.get("/api/menu", async (req, res) => {
+  try {
+    const { category } = req.query;
+    const query = category ? { category } : {};
+    
+    const foodItems = await FoodItem.find(query);
+    res.json(foodItems);
+  } catch (error) {
+    console.error("Error fetching menu items:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to fetch menu items" 
+    });
+  }
+});
+
+// Get a single food item
+app.get("/api/menu/:id", async (req, res) => {
+  try {
+    const foodItem = await FoodItem.findById(req.params.id);
+    
+    if (!foodItem) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Menu item not found" 
+      });
+    }
+    
+    res.json(foodItem);
+  } catch (error) {
+    console.error("Error fetching menu item:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to fetch menu item" 
+    });
+  }
+});
+
+// Add a new food item (Admin only)
+app.post("/api/menu", async (req, res) => {
+  try {
+    const { name, description, price, category, imageUrl, isAvailable, isPopular } = req.body;
+    
+    // Basic validation
+    if (!name || !description || !price || !category) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide name, description, price, and category" 
+      });
+    }
+    
+    const newFoodItem = new FoodItem({
+      name,
+      description,
+      price,
+      category,
+      imageUrl: imageUrl || "/api/placeholder/300/200",
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
+      isPopular: isPopular || false
+    });
+    
+    await newFoodItem.save();
+    
+    res.status(201).json({
+      success: true,
+      message: "Menu item added successfully",
+      foodItem: newFoodItem
+    });
+  } catch (error) {
+    console.error("Error adding menu item:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to add menu item" 
+    });
+  }
+});
+
+// Update a food item (Admin only)
+app.put("/api/menu/:id", async (req, res) => {
+  try {
+    const { name, description, price, category, imageUrl, isAvailable, isPopular } = req.body;
+    
+    const updatedFoodItem = await FoodItem.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        description,
+        price,
+        category,
+        imageUrl,
+        isAvailable,
+        isPopular
+      },
+      { new: true }
+    );
+    
+    if (!updatedFoodItem) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Menu item not found" 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: "Menu item updated successfully",
+      foodItem: updatedFoodItem
+    });
+  } catch (error) {
+    console.error("Error updating menu item:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to update menu item" 
+    });
+  }
+});
+
+// Delete a food item (Admin only)
+app.delete("/api/menu/:id", async (req, res) => {
+  try {
+    const deletedFoodItem = await FoodItem.findByIdAndDelete(req.params.id);
+    
+    if (!deletedFoodItem) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Menu item not found" 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: "Menu item deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting menu item:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to delete menu item" 
+    });
+  }
+});
+
+// Seed initial menu data (you can call this once to populate your database)
+app.post("/api/seed-menu", async (req, res) => {
+  try {
+    // Check if there are already menu items
+    const count = await FoodItem.countDocuments();
+    if (count > 0) {
+      return res.json({ message: "Menu items already exist" });
+    }
+    
+    // Initial menu data from your existing menu
+    const initialMenuItems = [
+      { name: "Masala Dosa", description: "Rice crepe with spicy potato filling", price: 110, category: "brunch" },
+      { name: "Aloo Paratha", description: "Stuffed wheat flatbread with butter", price: 70, category: "brunch" },
+      { name: "Eggs Benedict", description: "Poached eggs, hollandaise sauce", price: 140, category: "brunch" },
+      { name: "Pancakes & Maple Syrup", description: "Classic pancakes with pure maple syrup", price: 220, category: "brunch" },
+      { name: "French Toast", description: "Crispy golden toast with honey drizzle", price: 100, category: "brunch" },
+      { name: "Cheesy Garlic Naan Benedict", description: "Poached eggs over mini garlic naans, topped with creamy tikka hollandaise", price: 200, category: "brunch" },
+      { name: "Tandoori Avocado Toast", description: "Grilled avocado with smoky tandoori spices on sourdough, topped with pickled onions", price: 150, category: "brunch" },
+      
+      { name: "Chicken Biryani", description: "Aromatic basmati rice with spices", price: 350, category: "lunch" },
+      { name: "Mutton Biryani", description: "Aromatic basmati rice with spices", price: 420, category: "lunch" },
+      { name: "Butter Chicken", description: "Cottage cheese in creamy tomato sauce", price: 280, category: "lunch" },
+      { name: "Lasagna", description: "Layered pasta with ricotta and meat sauce", price: 400, category: "lunch" },
+      { name: "Grilled Chicken Salad", description: "Fresh greens, grilled chicken & vinaigrette", price: 260, category: "lunch" },
+      { name: "Fish & Chips", description: "Golden fried fish with crispy fries", price: 320, category: "lunch" },
+      { name: "Kathi Roll Burrito", description: "A fusion of a burrito and Indian kathi roll, stuffed with spiced paneer, saffron rice, and raita drizzle", price: 200, category: "lunch" },
+      { name: "Black Garlic & Truffle Butter Naan Pizza", description: "Naan topped with black garlic sauce, mushrooms, and truffle butter", price: 280, category: "lunch" },
+      
+      { name: "Butter Chicken", description: "Rich tomato-based curry with chicken", price: 340, category: "dinner" },
+      { name: "Beef Stroganoff", description: "Creamy Russian beef dish with pasta", price: 450, category: "dinner" },
+      { name: "Shrimp Alfredo Pasta", description: "Creamy garlic sauce with juicy shrimp", price: 420, category: "dinner" },
+      { name: "Tandoori Roti & Sabzi", description: "Traditional tandoori bread with mixed veggies", price: 200, category: "dinner" },
+      { name: "Lobster Thermidor", description: "Succulent lobster in a creamy brandy-infused sauce, topped with gruyère cheese and baked until golden", price: 460, category: "dinner" },
+      { name: "Saffron & Gold Leaf Risotto", description: "Creamy risotto infused with saffron and garnished with edible gold leaf for an opulent touch", price: 300, category: "dinner" },
+      { name: "Mutton Rogan Josh", description: "Kashmiri-style slow-cooked lamb curry with rich spices", price: 380, category: "dinner" },
+      
+      { name: "Gulab Jamun", description: "Deep-fried milk balls in sugar syrup", price: 120, category: "dessert" },
+      { name: "Tiramisu", description: "Italian coffee-flavored dessert", price: 280, category: "dessert" },
+      { name: "Chocolate Brownie", description: "Warm fudgy brownie with ice cream", price: 250, category: "dessert" },
+      { name: "Cheesecake", description: "Classic creamy cheesecake with berry topping", price: 260, category: "dessert" },
+      { name: "24K Gold Chocolate Lava Cake", description: "Rich molten chocolate cake with edible gold dust", price: 450, category: "dessert" },
+      { name: "Saffron Pistachio Cheesecake", description: "Baked cheesecake infused with saffron and topped with pistachios", price: 350, category: "dessert" },
+      { name: "Dark Chocolate & Raspberry Mousse", description: "Layers of dark chocolate and raspberry mousse", price: 320, category: "dessert" },
+      
+      { name: "Mango Lassi", description: "Sweet yogurt drink with mango", price: 150, category: "drinks" },
+      { name: "Espresso", description: "Strong Italian coffee shot", price: 110, category: "drinks" },
+      { name: "Iced Latte", description: "Chilled espresso with creamy milk", price: 160, category: "drinks" },
+      { name: "Mocktail - Blue Lagoon", description: "Refreshing blue drink with lemon fizz", price: 200, category: "drinks" },
+      { name: "Golden Elixir Martini", description: "Vodka martini infused with saffron and elderflower", price: 500, category: "drinks" },
+      { name: "Midnight Velvet Negroni", description: "Negroni with activated charcoal and dark cherry bitters", price: 450, category: "drinks" },
+      { name: "Imperial Old Fashioned", description: "Smoked bourbon cocktail with 24k gold leaf", price: 550, category: "drinks" }
+    ];
+    
+    // Add image URLs to each item
+    const menuItems = initialMenuItems.map(item => ({
+      ...item,
+      imageUrl: "/api/placeholder/300/200" // Placeholder image for all items
+    }));
+    
+    await FoodItem.insertMany(menuItems);
+    
+    res.status(201).json({
+      success: true,
+      message: "Menu seeded successfully",
+      count: menuItems.length
+    });
+  } catch (error) {
+    console.error("Error seeding menu:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to seed menu" 
+    });
+  }
+});
+
+
+
+
+
+
+
 // ✅ Start the server
 const PORT = 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

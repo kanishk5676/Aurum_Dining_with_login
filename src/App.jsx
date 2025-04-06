@@ -11,9 +11,10 @@ import ResConfirmation from "./components/ResConfirmation";
 import UpdateOrDeleteOrder from "./components/UpdateDelete";
 import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
-import UserLogin from "./components/Login"; // New component
-import UserProfile from "./components/UserProfile"; // New component
-import UserRegistration from "./components/UserRegistration"; // New component
+import AdminMenuManagement from "./components/AdminMenuManagement"; // Import the new component
+import UserLogin from "./components/Login";
+import UserProfile from "./components/UserProfile";
+import UserRegistration from "./components/UserRegistration";
 import bgImage from "/images/hk-background.png";
 
 function AnimatedRoutes() {
@@ -31,7 +32,7 @@ function AnimatedRoutes() {
         <Route path="/order-confirmation/:orderId" element={<PageWrapper><OrderConfirmation /></PageWrapper>} />
         <Route path="/update-or-delete-order" element={<PageWrapper><UpdateOrDeleteOrder /></PageWrapper>} />
         
-        {/* New Routes for User Authentication */}
+        {/* User Authentication Routes */}
         <Route path="/login" element={<PageWrapper><UserLogin /></PageWrapper>} />
         <Route path="/register" element={<PageWrapper><UserRegistration /></PageWrapper>} />
         <Route path="/profile" element={<PageWrapper><UserProfile /></PageWrapper>} />
@@ -39,6 +40,7 @@ function AnimatedRoutes() {
         {/* Admin Routes */}
         <Route path="/admin-login" element={<PageWrapper><AdminLogin /></PageWrapper>} />
         <Route path="/admin-dashboard" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
+        <Route path="/admin-menu-management" element={<PageWrapper><AdminMenuManagement /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );
