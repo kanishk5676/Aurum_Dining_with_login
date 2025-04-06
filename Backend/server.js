@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const bcrypt = require("bcryptjs"); // Add this package for password hashing
 
 const app = express();
 app.use(cors());
@@ -28,26 +29,173 @@ const reservationSchema = new mongoose.Schema({
   time: String,
   guests: Number,
   tables: [String],
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Link to user
+  createdAt: { type: Date, default: Date.now }, // Add creation date
 });
 const Reservation = mongoose.model("Reservation", reservationSchema);
 
 // ✅ Takeaway Order Schema
-// Modified TakeawayOrder Schema
 const takeawayOrderSchema = new mongoose.Schema({
-    orderId: String,
-    fullName: String,
-    phone: String,
-    address: String,
-    items: [{ name: String, quantity: Number, price: Number }],
-    subtotal: Number,
-    tax: Number,
-    acTax: Number, // Added AC Tax (2%)
-    gst: Number,   // Added GST (8%)
-    deliveryCharge: Number,
-    total: Number,
-    createdAt: { type: Date, default: Date.now },
-  });
+  orderId: String,
+  fullName: String,
+  phone: String,
+  address: String,
+  items: [{ name: String, quantity: Number, price: Number }],
+  subtotal: Number,
+  tax: Number,
+  acTax: Number,
+  gst: Number,
+  deliveryCharge: Number,
+  total: Number,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Link to user
+  createdAt: { type: Date, default: Date.now },
+});
 const TakeawayOrder = mongoose.model("TakeawayOrder", takeawayOrderSchema);
+
+// ✅ New User Schema
+const userSchema = new mongoose.Schema({
+  fullName: { type: String, required: true },
+  phone: { type: String, required: true, unique: true },
+  email: { type: String },
+  password: { type: String, required: true }, 
+  isAdmin: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+const User = mongoose.model("User", userSchema);
+
+// ✅ User Registration
+app.post("/api/register", async (req, res) => {
+  try {
+    const { fullName, phone, email, password } = req.body;
+    
+    // Basic validation
+    if (!fullName || !phone || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide name, phone number, and password" 
+      });
+    }
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User with this phone number already exists" 
+      });
+    }
+    
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Create user
+    const newUser = new User({
+      fullName,
+      phone,
+      email,
+      password: hashedPassword
+    });
+    
+    await newUser.save();
+    
+    res.status(201).json({
+      success: true,
+      message: "Registration successful. Please login.",
+      userId: newUser._id
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Registration failed. Please try again later." 
+    });
+  }
+});
+
+// ✅ User Login
+app.post("/api/login", async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    
+    // Find user by phone
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid phone number or password" 
+      });
+    }
+    
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid phone number or password" 
+      });
+    }
+    
+    // Return user info (excluding password)
+    const userResponse = {
+      userId: user._id,
+      fullName: user.fullName,
+      phone: user.phone,
+      email: user.email,
+      isAdmin: user.isAdmin
+    };
+    
+    res.json({
+      success: true,
+      message: "Login successful",
+      user: userResponse
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Login failed. Please try again later." 
+    });
+  }
+});
+
+// ✅ Get User Profile
+app.get("/api/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user profile", error: error.message });
+  }
+});
+
+// ✅ Get User Orders (both reservations and takeaway)
+app.get("/api/users/:userId/orders", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Get both reservations and takeaway orders
+    const reservations = await Reservation.find({ userId: mongoose.Types.ObjectId(userId) })
+      .sort({ createdAt: -1 });
+      
+    const takeawayOrders = await TakeawayOrder.find({ userId: mongoose.Types.ObjectId(userId) })
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      reservations,
+      takeawayOrders
+    });
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    res.status(500).json({ message: "Error fetching orders", error: error.message });
+  }
+});
 
 // ✅ Fetch all tables
 app.get("/tables", async (req, res) => {
@@ -74,10 +222,10 @@ app.get("/reserved-tables", async (req, res) => {
   }
 });
 
-// ✅ Save a reservation with a unique order ID
+// ✅ Modified: Save a reservation with a unique order ID and user association
 app.post("/reserve", async (req, res) => {
   try {
-    const { fullName, phone, email, date, time, guests, tables } = req.body;
+    const { fullName, phone, email, date, time, guests, tables, userId } = req.body;
     if (!fullName || !phone || !email || !date || !time || !guests || tables.length === 0) {
       return res.status(400).json({ 
         success: false, 
@@ -85,7 +233,17 @@ app.post("/reserve", async (req, res) => {
       });
     }
     const orderId = new mongoose.Types.ObjectId().toString();
-    const newReservation = new Reservation({ orderId, fullName, phone, email, date, time, guests, tables });
+    const newReservation = new Reservation({ 
+      orderId, 
+      fullName, 
+      phone, 
+      email, 
+      date, 
+      time, 
+      guests, 
+      tables,
+      userId // Associate with user if provided
+    });
     await newReservation.save();
     res.status(201).json({ 
       success: true, 
@@ -115,10 +273,10 @@ app.get("/reservation/:orderId", async (req, res) => {
   }
 });
 
-// ✅ Save a Takeaway Order
+// ✅ Modified: Save a Takeaway Order with user association
 app.post("/takeaway", async (req, res) => {
   try {
-    const { fullName, phone, address, items, subtotal, tax, acTax, gst, deliveryCharge, total } = req.body;
+    const { fullName, phone, address, items, subtotal, tax, acTax, gst, deliveryCharge, total, userId } = req.body;
     if (!fullName || !phone || !address || !items.length || !subtotal || !total) {
       return res.status(400).json({ 
         success: false, 
@@ -137,7 +295,8 @@ app.post("/takeaway", async (req, res) => {
       acTax, 
       gst, 
       deliveryCharge, 
-      total 
+      total,
+      userId // Associate with user if provided
     });
     await newOrder.save();
     res.status(201).json({ 
@@ -167,8 +326,6 @@ app.get("/takeaway/:orderId", async (req, res) => {
     res.status(500).json({ message: "Error fetching takeaway order", error });
   }
 });
-
-// Add this endpoint to your server.js file
 
 // ✅ Fetch orders by phone number
 app.get("/orders-by-phone/:phone", async (req, res) => {
@@ -229,9 +386,8 @@ app.delete("/reservation/:orderId", async (req, res) => {
     });
   }
 });
-// Add this new endpoint to your server.js file for handling reservation updates
 
-// Update reservation
+// ✅ Update reservation
 app.put("/update-reservation", async (req, res) => {
   try {
     const { orderId, fullName, phone, email, date, time, guests, tables } = req.body;
@@ -292,8 +448,8 @@ app.get("/admin/takeaway-orders", async (req, res) => {
   }
 });
 
- // Cancel a reservation (for admin panel)
- app.delete("/admin/reservations/:orderId", async (req, res) => {
+// Cancel a reservation (for admin panel)
+app.delete("/admin/reservations/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
     const deletedReservation = await Reservation.findOneAndDelete({ orderId });
@@ -323,7 +479,6 @@ app.delete("/admin/takeaway-orders/:orderId", async (req, res) => {
     res.status(500).json({ message: "Error cancelling takeaway order", error });
   }
 });
-
 
 // ✅ Start the server
 const PORT = 5001;

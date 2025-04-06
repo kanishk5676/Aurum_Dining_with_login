@@ -5,12 +5,23 @@ import logo from "../assets/logo5.png";
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const isLoggedIn = localStorage.getItem('user') !== null;
+  const user = isLoggedIn ? JSON.parse(localStorage.getItem('user')) : null;
 
   const handleHomeClick = (e) => {
     if (location.pathname === "/") {
       e.preventDefault();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
 
   return (
@@ -38,17 +49,37 @@ function Navbar() {
             Takeaway
           </Link>
           
-          {/* Fixed Admin Button Alignment */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 h-10 rounded-md font-medium transition-colors duration-300 flex items-center justify-center"
-            onClick={() => navigate('/admin-login')}
-          >
-            Admin
-          </motion.button>
+          {/* Conditional Display: Login/Profile Button */}
+          {isLoggedIn ? (
+            <div className="flex items-center space-x-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 h-10 rounded-md font-medium transition-colors duration-300 flex items-center justify-center"
+                onClick={handleProfileClick}
+              >
+                {user?.fullName || "Profile"}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 h-10 rounded-md font-medium transition-colors duration-300 flex items-center justify-center"
+                onClick={handleLogout}
+              >
+                Logout
+              </motion.button>
+            </div>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 h-10 rounded-md font-medium transition-colors duration-300 flex items-center justify-center"
+              onClick={() => navigate('/login')}
+            >
+              Login
+            </motion.button>
+          )}
         </div>
-
       </div>
     </nav>
   );
