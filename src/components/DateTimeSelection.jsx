@@ -1,105 +1,197 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import bgImage from "/images/hk-background.png";
-import food1 from "/images/food1.jpg"; 
+import background from "/images/hk-background.png";
 
-const DateTimeSelection = () => {
-  const [date, setDate] = useState(null);
-  const [time, setTime] = useState("");
+function DateTimeSelection() {
   const navigate = useNavigate();
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [guests, setGuests] = useState(2);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [user, setUser] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleProceed = () => {
+  // Generate options for date selection (next 30 days)
+  const dateOptions = [...Array(30)].map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return {
+      value: d.toISOString().split("T")[0],
+      label: d.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      }),
+    };
+  });
+
+  // Time options for reservation
+  const timeOptions = [
+    "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
+    "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+    "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+    "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
+    "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM",
+    "9:00 PM", "9:30 PM", "10:00 PM",
+  ];
+
+  // Check if user is logged in on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleContinue = () => {
     if (!date || !time) {
-      alert("Please select a date and time before proceeding.");
+      setErrorMessage("Please select both date and time");
       return;
     }
 
-    // Navigate to the "Reserve Table" page with the selected date and time
-    navigate("/reserve-table", { state: { date: date.toDateString(), time } });
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    // Store reservation details in sessionStorage
+    sessionStorage.setItem("reservationDetails", JSON.stringify({
+      date,
+      time,
+      guests
+    }));
+
+    // Navigate to table selection page
+    navigate("/reserve-table");
   };
 
-  const handleManageReservation = () => {
-    // Navigate directly to the Update or Delete Order page
-    navigate("/update-or-delete-order");  // No orderId passed for now
+  // Navigate to login page
+  const handleRedirectToLogin = () => {
+    // Store selected date/time in session storage
+    sessionStorage.setItem('pendingReservation', JSON.stringify({ date, time, guests }));
+    navigate('/login?redirect=select-date-time');
   };
 
   return (
     <div
-      className="flex flex-col sm:flex-row items-start min-h-screen bg-repeat bg-[length:100px_100px] bg-center px-8 pt-24"
-      style={{ backgroundImage: `url(${bgImage})` }} // Background image applied
+      className="min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col items-center justify-center p-4"
+      style={{ backgroundImage: `url(${background})` }}
     >
-      {/* Left Side (Date & Time Picker) */}
-      <div className="flex flex-col w-full sm:w-1/2 mb-8 sm:mb-0">
-        <h1 className="text-7xl font-bold mb-8 text-white">Select Date & Time</h1>
+      <div className="max-w-lg w-full bg-black/30 p-8 rounded-xl border border-white shadow-xl">
+        <h1 className="text-3xl font-bold text-center mb-8">Reserve a Table</h1>
+        
+        {errorMessage && (
+          <div className="bg-red-600 text-white p-3 mb-6 rounded">
+            {errorMessage}
+          </div>
+        )}
 
-        {/* Date Picker */}
-        <label className="text-white text-3xl mb-4">Select Date:</label>
-        <DatePicker
-          selected={date}
-          onChange={(date) => setDate(date)}
-          minDate={new Date()} // Prevent past dates
-          className="p-4 border rounded-md mb-8 w-full sm:w-96 text-xl bg-black text-white appearance-none"
-          dateFormat="MMMM d, yyyy"
-          placeholderText="Select a Date"
-        />
+        {/* Login Prompt Modal */}
+        {showLoginPrompt && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-gray-900 p-8 rounded-lg shadow-xl border border-[#B8860B] max-w-md w-full mx-4">
+              <h3 className="text-2xl font-bold mb-4 text-white">Login Required</h3>
+              <p className="mb-6 text-gray-300">Please login to your account to make a reservation.</p>
+              <div className="flex justify-end space-x-4">
+                <button 
+                  onClick={() => setShowLoginPrompt(false)}
+                  className="px-4 py-2 text-gray-300 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleRedirectToLogin}
+                  className="px-4 py-2 bg-[#B8860B] text-black rounded hover:bg-[#D4AF37]"
+                >
+                  Go to Login
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Time Slot Dropdown */}
-        <label className="text-white text-3xl mb-4">Select Time Slot:</label>
-        <select
-          className="p-4 border rounded-md mb-8 w-full sm:w-96 text-xl bg-black text-white appearance-none"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        >
-          <option value="">Select a Time Slot</option>
-          <option value="09:00 AM">09:00 AM - 11:00 AM</option>
-          <option value="11:00 AM">11:00 AM - 01:00 PM</option>
-          <option value="01:00 PM">01:00 PM - 03:00 PM</option>
-          <option value="03:00 PM">03:00 PM - 05:00 PM</option>
-          <option value="05:00 PM">05:00 PM - 07:00 PM</option>
-          <option value="07:00 PM">07:00 PM - 09:00 PM</option>
-        </select>
+        {/* User Info Summary (if logged in) */}
+        {user && (
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2">Reserving as:</h3>
+            <p><span className="text-gray-400">Name:</span> {user.fullName}</p>
+            <p><span className="text-gray-400">Phone:</span> {user.phone}</p>
+            {user.email && <p><span className="text-gray-400">Email:</span> {user.email}</p>}
+          </div>
+        )}
+        
+        {!user && (
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg text-center">
+            <p className="text-yellow-400 mb-2">Not logged in</p>
+            <button 
+              onClick={handleRedirectToLogin}
+              className="w-full p-2 bg-[#B8860B] text-black rounded hover:bg-[#D4AF37]"
+            >
+              Login to Reserve
+            </button>
+          </div>
+        )}
 
-        {/* Proceed Button */}
-        <button
-          onClick={handleProceed}
-          className="mt-4 p-4 bg-[#8C7427] text-white text-2xl rounded-md w-full sm:w-96"
-        >
-          Proceed
-        </button>
-
-        {/* Modify or Cancel Reservation Link */}
-        <p className="text-white text-center mt-4 flex items-center justify-start space-x-2 w-full sm:w-auto">
-          <span>Modify or cancel your reservation?</span>
-          <a
-            onClick={handleManageReservation} // Use the function to navigate to the UpdateOrDeleteOrder page
-            className="text-blue-400 underline ml-1 hover:text-blue-600 cursor-pointer"
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Select Date</label>
+          <select
+            className="w-full p-3 bg-gray-800 rounded text-white"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
           >
-            Manage Reservation
-          </a>
-        </p>
-      </div>
+            <option value="">Choose a date</option>
+            {dateOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Right Side (Image with Text) */}
-      <div className="flex flex-col items-center justify-center w-full sm:w-1/2 relative min-h-[500px]">
-        <div
-          className="absolute top-0 left-0 w-full h-full"
-          style={{
-            backgroundImage: `url(${food1})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          {/* Overlay for text */}
-          <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center bg-black bg-opacity-50 text-white p-8 text-center">
-            <h2 className="text-4xl font-bold mb-4">Rise and Dine</h2>
-            <p className="text-lg">Start your day with a feast of flavors.</p>
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Select Time</label>
+          <select
+            className="w-full p-3 bg-gray-800 rounded text-white"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          >
+            <option value="">Choose a time</option>
+            {timeOptions.map((time) => (
+              <option key={time} value={time}>
+                {time}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-8">
+          <label className="block text-sm font-medium mb-2">Number of Guests</label>
+          <div className="flex items-center justify-between">
+            <button
+              className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl"
+              onClick={() => setGuests(Math.max(1, guests - 1))}
+            >
+              -
+            </button>
+            <span className="text-2xl font-bold mx-4">{guests}</span>
+            <button
+              className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl"
+              onClick={() => setGuests(Math.min(20, guests + 1))}
+            >
+              +
+            </button>
           </div>
         </div>
+
+        <button
+          className="w-full py-3 bg-[#B8860B] text-black rounded-lg font-semibold hover:bg-yellow-600 transition"
+          onClick={handleContinue}
+        >
+          Continue to Table Selection
+        </button>
       </div>
     </div>
   );
-};
+}
 
 export default DateTimeSelection;

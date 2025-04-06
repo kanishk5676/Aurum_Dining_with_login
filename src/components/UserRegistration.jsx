@@ -6,6 +6,7 @@ import axios from 'axios';
 const UserRegistration = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState(''); // Added email field
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,25 +31,33 @@ const UserRegistration = () => {
     setLoading(true);
     
     try {
-      const response = await axios.post('http://localhost:5001/register', {
+      // Fix endpoint to match server.js
+      const response = await axios.post('http://localhost:5001/api/register', {
         fullName,
         phone,
+        email,
         password
       });
       
       if (response.data.success) {
-        // Save user data in local storage
-        localStorage.setItem('userData', JSON.stringify({
-          userId: response.data.userId,
-          fullName: response.data.fullName,
-          phone: response.data.phone
-        }));
+        // Auto login after successful registration
+        const loginResponse = await axios.post('http://localhost:5001/api/login', {
+          phone,
+          password
+        });
         
-        navigate('/profile');
+        if (loginResponse.data.success) {
+          localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+          navigate('/profile');
+        } else {
+          setError('Registration successful. Please log in.');
+          navigate('/login');
+        }
       } else {
         setError(response.data.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
+      console.error('Registration error:', error);
       setError(error.response?.data?.message || 'An error occurred while registering.');
     } finally {
       setLoading(false);
@@ -86,6 +95,15 @@ const UserRegistration = () => {
             className="p-3 border rounded-md mb-4 w-full sm:w-96 text-lg bg-black text-white"
             placeholder="Enter your phone number"
             required
+          />
+          
+          <label className="text-white text-xl mb-2">Email (Optional)</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="p-3 border rounded-md mb-4 w-full sm:w-96 text-lg bg-black text-white"
+            placeholder="Enter your email address"
           />
           
           <label className="text-white text-xl mb-2">Password</label>

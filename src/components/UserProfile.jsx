@@ -5,10 +5,7 @@ import axios from 'axios';
 import bgImage from "/images/hk-background.png";
 
 const UserProfile = () => {
-  const [user, setUser] = useState({
-    name: localStorage.getItem('userName') || '',
-    phone: localStorage.getItem('userPhone') || ''
-  });
+  const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,15 +13,29 @@ const UserProfile = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    const userPhone = localStorage.getItem('userPhone');
+    // Get user data from localStorage (as stored by Login.jsx)
+    const userData = localStorage.getItem('user');
     
-    if (!userId || !userPhone) {
+    if (!userData) {
       navigate('/login');
       return;
     }
     
-    fetchUserData(userPhone);
+    try {
+      // Parse the user data object
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      
+      // Fetch orders using the phone from the parsed user object
+      if (parsedUser && parsedUser.phone) {
+        fetchUserData(parsedUser.phone);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      navigate('/login');
+    }
   }, [navigate]);
   
   const fetchUserData = async (phone) => {
@@ -45,9 +56,7 @@ const UserProfile = () => {
   };
   
   const handleLogout = () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userPhone');
+    localStorage.removeItem('user');
     navigate('/login');
   };
   
@@ -84,6 +93,14 @@ const UserProfile = () => {
     );
   }
   
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-black">
+        <div className="text-white text-xl">User data not found. Please <a href="/login" className="text-yellow-500 underline">login</a> again.</div>
+      </div>
+    );
+  }
+  
   return (
     <div
       className="min-h-screen bg-repeat bg-[length:100px_100px] bg-center px-8 pt-24 pb-12"
@@ -93,7 +110,7 @@ const UserProfile = () => {
         {/* User Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
-            <h1 className="text-5xl font-bold text-white mb-2">{user.name}'s Profile</h1>
+            <h1 className="text-5xl font-bold text-white mb-2">{user.fullName}'s Profile</h1>
             <p className="text-xl text-gray-300">Mobile: {user.phone}</p>
           </div>
           <motion.button

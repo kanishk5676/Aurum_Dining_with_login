@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import background from "/images/hk-background.png";
 
@@ -6,15 +6,13 @@ function Takeaway() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("brunch");
   const [order, setOrder] = useState({});
-  const [userName, setUserName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [user, setUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Menu Data
   const menuItems = {
-
     brunch: [
       { name: "Masala Dosa", desc: "Rice crepe with spicy potato filling", price: "110" },
       { name: "Aloo Paratha", desc: "Stuffed wheat flatbread with butter", price: "70" },
@@ -24,7 +22,6 @@ function Takeaway() {
       { name: "Cheesy Garlic Naan Benedict" ,desc:"Poached eggs over mini garlic naans, topped with creamy tikka hollandaise",price:"200"},
       { name: "Tandoori Avocado Toast" ,desc:"Grilled avocado with smoky tandoori spices on sourdough, topped with pickled onions",price:"150"}
     ],
-
     lunch: [
       { name: "Chicken Biryani", desc: "Aromatic basmati rice with spices", price: "350" },
       { name: "Mutton Biryani", desc: "Aromatic basmati rice with spices", price: "420" },
@@ -35,7 +32,6 @@ function Takeaway() {
       { name: "Kathi Roll Burrito", desc: "A fusion of a burrito and Indian kathi roll, stuffed with spiced paneer, saffron rice, and raita drizzle", price: "200" },
       { name: "Black Garlic & Truffle Butter Naan Pizza", desc: "Naan topped with black garlic sauce, mushrooms, and truffle butter", price: "280" },
     ],
-
     dinner: [
       { name: "Butter Chicken", desc: "Rich tomato-based curry with chicken", price: "340" },
       { name: "Beef Stroganoff", desc: "Creamy Russian beef dish with pasta", price: "450" },
@@ -45,7 +41,6 @@ function Takeaway() {
       { name: "Saffron & Gold Leaf Risotto", desc: "Creamy risotto infused with saffron and garnished with edible gold leaf for an opulent touch", price: "300" },
       { name: "Mutton Rogan Josh", desc: "Kashmiri-style slow-cooked lamb curry with rich spices", price: "380" },
     ],    
-
     desserts:[
       { name: "Gulab Jamun", desc: "Deep-fried milk balls in sugar syrup", price: "120" },
       { name: "Tiramisu", desc: "Italian coffee-flavored dessert", price: "280" },
@@ -55,7 +50,6 @@ function Takeaway() {
       { name: "Saffron Pistachio Cheesecake", desc: "Baked cheesecake infused with saffron and topped with pistachios", price: "350" },
       { name: "Dark Chocolate & Raspberry Mousse", desc: "Layers of dark chocolate and raspberry mousse", price: "320" },
     ],
-    
     drinks: [
       { name: "Mango Lassi", desc: "Sweet yogurt drink with mango", price: "150" },
       { name: "Espresso", desc: "Strong Italian coffee shot", price: "110" },
@@ -67,6 +61,13 @@ function Takeaway() {
     ],
   };
 
+  // Check if user is logged in on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const updateOrder = (item, action) => {
     setOrder((prevOrder) => {
@@ -103,50 +104,65 @@ function Takeaway() {
     }));
   };
 
-  // Validate form inputs
-  const validateForm = () => {
-    if (userName.trim() === "") {
-      setErrorMessage("Please enter your name");
-      return false;
-    }
-    if (phone.trim() === "" || !/^\d{10}$/.test(phone)) {
-      setErrorMessage("Please enter a valid 10-digit phone number");
-      return false;
-    }
-    if (address.trim() === "") {
-      setErrorMessage("Please enter your delivery address");
-      return false;
-    }
+  // Validate order
+  const validateOrder = () => {
     if (Object.keys(order).length === 0) {
       setErrorMessage("Please add at least one item to your order");
       return false;
     }
+    
+    if (!user) {
+      setShowLoginPrompt(true);
+      return false;
+    }
+
+    if (!user.fullName || !user.phone) {
+      setErrorMessage("User profile incomplete. Please update your profile.");
+      return false;
+    }
+    
     setErrorMessage("");
     return true;
+  };
+
+  // Navigate to login page
+  const handleRedirectToLogin = () => {
+    // Store current order in session storage so it can be retrieved after login
+    sessionStorage.setItem('pendingOrder', JSON.stringify(order));
+    navigate('/login?redirect=order-takeaway');
   };
 
   // Handle order submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateOrder()) {
       return;
     }
     
     try {
       setIsSubmitting(true);
       
+      // Create modal for address input
+      const deliveryAddress = prompt("Please enter your delivery address:");
+      if (!deliveryAddress || deliveryAddress.trim() === "") {
+        setErrorMessage("Delivery address is required");
+        setIsSubmitting(false);
+        return;
+      }
+      
       const orderData = {
-        fullName: userName,
-        phone: phone,
-        address: address,
+        fullName: user.fullName,
+        phone: user.phone,
+        address: deliveryAddress,
         items: formatOrderItems(),
         subtotal: subtotal,
         tax: tax,
         acTax: acTax,
         gst: gst,
         deliveryCharge: deliveryCharge,
-        total: total
+        total: total,
+        userId: user.userId // Link order to user
       };
       
       const response = await fetch('http://localhost:5001/takeaway', {
@@ -173,6 +189,7 @@ function Takeaway() {
       setIsSubmitting(false);
     }
   };
+
   return (
     <div
       className="w-full min-h-screen bg-repeat bg-[length:100px_100px] text-white flex flex-col py-12 px-6"
@@ -181,9 +198,33 @@ function Takeaway() {
       <h1 className="text-3xl font-bold tracking-wide text-center">TAKEAWAY</h1>
       <h2 className="text-lg font-semibold text-[#B8860B] text-center mt-1">Order Your Favorite Food</h2>
 
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-8 rounded-lg shadow-xl border border-[#B8860B] max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold mb-4 text-white">Login Required</h3>
+            <p className="mb-6 text-gray-300">Please login to your account to place an order.</p>
+            <div className="flex justify-end space-x-4">
+              <button 
+                onClick={() => setShowLoginPrompt(false)}
+                className="px-4 py-2 text-gray-300 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRedirectToLogin}
+                className="px-4 py-2 bg-[#B8860B] text-black rounded hover:bg-[#D4AF37]"
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row mt-12 w-full max-w-7xl mx-auto">
         {/* Left: Menu */}
-        <div className="md:w-2/3 w-full pr-10">
+        <div className="md:w-2/3 w-full pr-0 md:pr-10">
           <div className="grid grid-cols-3 gap-4 mb-6">
             {["brunch", "lunch", "dinner"].map((category) => (
               <button
@@ -249,48 +290,43 @@ function Takeaway() {
 
         {/* Right: Billing Section */}
         <div className="md:w-1/3 w-full bg-black/30 p-6 rounded-lg shadow-lg border border-white mt-8 md:mt-0">
-          <form onSubmit={handleSubmit}>
-            <h2 className="text-lg font-bold text-center mb-4">Your Details</h2>
-            {errorMessage && (
-              <div className="bg-red-600 text-white p-2 mb-4 rounded text-sm">
-                {errorMessage}
-              </div>
-            )}
-            <input 
-              type="text" 
-              placeholder="Your Name" 
-              className="w-full p-2 mb-4 rounded bg-gray-800 text-white" 
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-            />
-            <input 
-              type="text" 
-              placeholder="Phone Number" 
-              className="w-full p-2 mb-4 rounded bg-gray-800 text-white" 
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              pattern="\d{10}"
-              required
-            />
-            <input 
-              type="text" 
-              placeholder="Delivery Address" 
-              className="w-full p-2 mb-4 rounded bg-gray-800 text-white" 
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              required
-            />
-            <button
-              type="submit"
-              className={`w-full p-3 mt-4 rounded-lg font-semibold transition bg-[#B8860B] text-black hover:bg-[#D4AF37] ${
-                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Place Order"}
-            </button>
-          </form>
+          {errorMessage && (
+            <div className="bg-red-600 text-white p-2 mb-4 rounded text-sm">
+              {errorMessage}
+            </div>
+          )}
+          
+          {/* User Info Summary */}
+          {user && (
+            <div className="mb-6 p-4 bg-gray-800/50 rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Ordering as:</h3>
+              <p><span className="text-gray-400">Name:</span> {user.fullName}</p>
+              <p><span className="text-gray-400">Phone:</span> {user.phone}</p>
+              {user.email && <p><span className="text-gray-400">Email:</span> {user.email}</p>}
+            </div>
+          )}
+          
+          {!user && (
+            <div className="mb-6 p-4 bg-gray-800/50 rounded-lg text-center">
+              <p className="text-yellow-400 mb-2">Not logged in</p>
+              <button 
+                onClick={handleRedirectToLogin}
+                className="w-full p-2 bg-[#B8860B] text-black rounded hover:bg-[#D4AF37]"
+              >
+                Login to Order
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={handleSubmit}
+            className={`w-full p-3 mt-4 rounded-lg font-semibold transition bg-[#B8860B] text-black hover:bg-[#D4AF37] ${
+              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={isSubmitting || !user}
+          >
+            {isSubmitting ? "Submitting..." : "Place Order"}
+          </button>
 
           {/* Billing Summary */}
           <div className="mt-6 text-lg font-semibold">
