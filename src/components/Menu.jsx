@@ -100,13 +100,7 @@ function Menu() {
                 className="bg-black/30 p-5 rounded-lg shadow-lg border border-white flex flex-col"
               >
                 <div className="flex flex-col md:flex-row gap-4">
-                  <div className="w-full md:w-1/3">
-                    <img 
-                      src={item.imageUrl} 
-                      alt={item.name} 
-                      className="w-full h-32 object-cover rounded-lg" 
-                    />
-                  </div>
+                  
                   <div className="w-full md:w-2/3">
                     <h3 className="text-lg font-bold">{item.name}</h3>
                     <p className="text-gray-300 text-sm">{item.description}</p>

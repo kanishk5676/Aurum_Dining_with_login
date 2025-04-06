@@ -181,20 +181,7 @@ const AdminMenuManagement = () => {
               key={item._id} 
               className="bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-800"
             >
-              <div className="h-48 bg-gray-800 relative">
-                <img 
-                  src={item.imageUrl || '/api/placeholder/300/200'} // Changed from image to imageUrl
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null; 
-                    e.target.src = '/api/placeholder/300/200';
-                  }}
-                />
-                <div className="absolute top-2 right-2 bg-yellow-600 text-white text-xs px-2 py-1 rounded-full">
-                  {item.category}
-                </div>
-              </div>
+             
               <div className="p-4">
                 <h2 className="text-xl font-bold text-white">{item.name}</h2>
                 <p className="text-gray-400 text-sm mt-1 h-12 overflow-hidden">{item.description}</p> {/* Changed from desc to description */}
@@ -405,25 +392,7 @@ const MenuItemFormModal = ({ title, item, onClose, onSubmit }) => {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-gray-300 mb-1">Image</label>
-              <div className="flex items-center gap-4">
-                <img
-                  src={imagePreview}
-                  alt="Food preview"
-                  className="w-24 h-24 object-cover rounded-md"
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md text-white"
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                For this example, we're using placeholder images. In a real application, you would upload images to a server.
-              </p>
-            </div>
+            
           </div>
 
           <div className="flex justify-end gap-4 mt-6">

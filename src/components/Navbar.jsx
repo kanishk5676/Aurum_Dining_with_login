@@ -31,7 +31,7 @@ function Navbar() {
         {/* Left - Logo */}
         <div className="h-full flex items-center ml-[-35px]">
           <img src={logo} alt="Logo" className="h-14" />
-          <p className="text-5xl pb-4 font-trajan">Aurum Dining</p>
+          <p className="text-5xl pb-4 font-trajan">Vijaya Dining</p>
         </div>
 
         {/* Center - Navigation Links */}

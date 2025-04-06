@@ -26,7 +26,7 @@ const Content = () => {
             />
             <div className="space-y-4">
               <p className="text-gray-300 font-montserrat">
-                Indulge in luxury without the wait—reserve your seat at Aurum's Kitchen effortlessly. 
+                Indulge in luxury without the wait—reserve your seat at vijaya's Kitchen effortlessly. 
                 Plan ahead and guarantee your place at our elegantly curated tables, ensuring an unforgettable dining experience tailored just for you.
               </p>
               <button 
@@ -48,7 +48,7 @@ const Content = () => {
             />
             <div className="space-y-4">
               <p className="text-gray-300 font-montserrat">
-                Enjoy the flavors of Aurum's Kitchen with ease—place a special order and savor your favorites just the way you like. 
+                Enjoy the flavors of vijaya's Kitchen with ease—place a special order and savor your favorites just the way you like. 
                 Whether you choose to pick up your meal or have it delivered straight to your doorstep in just 20 minutes, we bring the luxury of fine dining to you.
               </p>
               <button className="bg-[#B8860B] text-white px-6 py-3 rounded-md uppercase font-semibold hover:bg-[#9C7A40] transition duration-300" 
