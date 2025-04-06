@@ -16,7 +16,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
     if (!isAuthenticated) {
-      navigate('/');
+      navigate('/admin-login');
     } else {
       fetchOrders();
       fetchReservations();
@@ -87,7 +87,11 @@ const AdminDashboard = () => {
   
   const handleLogout = () => {
     localStorage.removeItem('isAdminAuthenticated');
-    navigate('/');
+    navigate('/admin-login');
+  };
+
+  const goToMenuManagement = () => {
+    navigate('/admin-menu-management');
   };
   
   if (loading) {
@@ -99,28 +103,28 @@ const AdminDashboard = () => {
   }
   
   return (
-    <div className="container mx-auto pb-12 bg-black min-h-screen">
-    <div className="flex justify-between items-center mb-6 pt-4">
-      <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-      <div className="flex gap-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md"
-          onClick={() => navigate('/admin-menu-management')}
-        >
-          Menu Management
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
-          onClick={handleLogout}
-        >
-          Logout
-        </motion.button>
+    <div className="container mx-auto pb-12 bg-black min-h-screen px-4">
+      <div className="flex justify-between items-center mb-6 pt-4">
+        <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+        <div className="flex gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md"
+            onClick={goToMenuManagement}
+          >
+            Menu Management
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
+            onClick={handleLogout}
+          >
+            Logout
+          </motion.button>
+        </div>
       </div>
-    </div>
       
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Takeaway Orders Section */}

@@ -29,7 +29,8 @@ const AdminMenuManagement = () => {
   const fetchMenuItems = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5001/api/menu-items');
+      // Updated API endpoint to match backend
+      const response = await axios.get('http://localhost:5001/api/menu');
       setMenuItems(response.data);
       setError(null);
     } catch (err) {
@@ -43,16 +44,22 @@ const AdminMenuManagement = () => {
   const handleAddItem = () => {
     setSelectedItem({
       name: '',
-      desc: '',
+      description: '', // Changed from desc to description
       price: '',
       category: 'brunch',
-      image: '/api/placeholder/300/200'
+      imageUrl: '/api/placeholder/300/200' // Changed from image to imageUrl
     });
     setShowAddModal(true);
   };
 
   const handleEditItem = (item) => {
-    setSelectedItem({ ...item });
+    // Format item to match form expectations
+    const formattedItem = {
+      ...item,
+      desc: item.description, // Map backend field to form field
+      image: item.imageUrl // Map backend field to form field
+    };
+    setSelectedItem(formattedItem);
     setShowEditModal(true);
   };
 
@@ -63,7 +70,17 @@ const AdminMenuManagement = () => {
 
   const handleSubmitAdd = async (formData) => {
     try {
-      await axios.post('http://localhost:5001/api/menu-items', formData);
+      // Map form fields to match backend schema
+      const menuItemData = {
+        name: formData.name,
+        description: formData.desc,
+        price: formData.price,
+        category: formData.category,
+        imageUrl: formData.image
+      };
+      
+      // Updated API endpoint to match backend
+      await axios.post('http://localhost:5001/api/menu', menuItemData);
       fetchMenuItems();
       setShowAddModal(false);
     } catch (err) {
@@ -74,7 +91,17 @@ const AdminMenuManagement = () => {
 
   const handleSubmitEdit = async (formData) => {
     try {
-      await axios.put(`http://localhost:5001/api/menu-items/${selectedItem._id}`, formData);
+      // Map form fields to match backend schema
+      const menuItemData = {
+        name: formData.name,
+        description: formData.desc,
+        price: formData.price,
+        category: formData.category,
+        imageUrl: formData.image
+      };
+      
+      // Updated API endpoint to match backend
+      await axios.put(`http://localhost:5001/api/menu/${selectedItem._id}`, menuItemData);
       fetchMenuItems();
       setShowEditModal(false);
     } catch (err) {
@@ -85,7 +112,8 @@ const AdminMenuManagement = () => {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5001/api/menu-items/${selectedItem._id}`);
+      // Updated API endpoint to match backend
+      await axios.delete(`http://localhost:5001/api/menu/${selectedItem._id}`);
       fetchMenuItems();
       setShowDeleteConfirmation(false);
     } catch (err) {
@@ -155,7 +183,7 @@ const AdminMenuManagement = () => {
             >
               <div className="h-48 bg-gray-800 relative">
                 <img 
-                  src={item.image || '/api/placeholder/300/200'} 
+                  src={item.imageUrl || '/api/placeholder/300/200'} // Changed from image to imageUrl
                   alt={item.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -169,8 +197,8 @@ const AdminMenuManagement = () => {
               </div>
               <div className="p-4">
                 <h2 className="text-xl font-bold text-white">{item.name}</h2>
-                <p className="text-gray-400 text-sm mt-1 h-12 overflow-hidden">{item.desc}</p>
-                <p className="text-yellow-500 font-bold mt-2">{item.price}</p>
+                <p className="text-gray-400 text-sm mt-1 h-12 overflow-hidden">{item.description}</p> {/* Changed from desc to description */}
+                <p className="text-yellow-500 font-bold mt-2">₹{item.price}</p>
                 
                 <div className="flex justify-end mt-4 gap-2">
                   <motion.button
@@ -257,14 +285,14 @@ const AdminMenuManagement = () => {
 const MenuItemFormModal = ({ title, item, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: item?.name || '',
-    desc: item?.desc || '',
+    desc: item?.desc || item?.description || '', // Handle both field names
     price: item?.price || '',
     category: item?.category || 'brunch',
-    image: item?.image || '/api/placeholder/300/200'
+    image: item?.image || item?.imageUrl || '/api/placeholder/300/200' // Handle both field names
   });
 
   const [errors, setErrors] = useState({});
-  const [imagePreview, setImagePreview] = useState(item?.image || '/api/placeholder/300/200');
+  const [imagePreview, setImagePreview] = useState(item?.image || item?.imageUrl || '/api/placeholder/300/200');
 
   const categories = ['brunch', 'lunch', 'dinner', 'dessert', 'drinks'];
 
@@ -353,7 +381,7 @@ const MenuItemFormModal = ({ title, item, onClose, onSubmit }) => {
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="₹250"
+                placeholder="250"
                 className={`w-full p-2 bg-gray-800 border rounded-md text-white ${
                   errors.price ? 'border-red-500' : 'border-gray-700'
                 }`}
