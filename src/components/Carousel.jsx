@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+// Note: Actual image imports remain unchanged
 import food1 from "../assets/food1.jpg";
 import food2 from "../assets/food2.jpg";
 import food6 from "../assets/food6.avif";
@@ -14,67 +16,110 @@ const images = [
 
 function Carousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Auto-rotate slides
+  useEffect(() => {
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentIndex]);
 
   const prevSlide = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setTimeout(() => setIsAnimating(false), 500);
   };
 
   const nextSlide = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setTimeout(() => setIsAnimating(false), 500);
+  };
+
+  const goToSlide = (index) => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setCurrentIndex(index);
+    setTimeout(() => setIsAnimating(false), 500);
   };
 
   return (
-    <div className="relative w-full mx-auto h-screen overflow-hidden">
+    <div className="relative w-full mx-auto h-[60vh] md:h-[70vh] overflow-hidden"> {/* Reduced height here */}
       {/* Image Slider Container */}
       <div
-        className="flex transition-transform duration-500 ease-in-out"
-        style={{ transform: `translateX(-${currentIndex * 100}vw)` }}
+        className="flex transition-transform duration-700 ease-in-out h-full"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {images.map((image, index) => (
-          <div key={index} className="w-screen flex-shrink-0 relative">
-            <img src={image.src} alt="carousel" className="w-full h-screen object-cover" />
+          <div key={index} className="w-full flex-shrink-0 relative h-full">
+            <div className="absolute inset-0 bg-black/30 z-10" /> {/* Overlay */}
+            <img 
+              src={image.src} 
+              alt={`carousel-image-${index}`} 
+              className="w-full h-full object-cover transition-transform duration-500"
+            />
           </div>
         ))}
       </div>
 
-      {/* Conditional Rendering: Show Text Only for Active Image */}
-      <div className="absolute top-1/3 left-16 md:left-32 text-white text-left">
-        <div className="flex flex-col text-6xl font-bold uppercase tracking-wide drop-shadow-lg">
+      {/* Text Animation Container */}
+      <div className="absolute top-1/4 left-4 md:left-16 lg:left-32 text-white text-left z-20 transition-opacity duration-300">
+        <div className="flex flex-col text-3xl md:text-5xl font-bold uppercase tracking-wider space-y-2">
           {images[currentIndex].title.map((word, i) => (
-            <span key={i}>{word}</span>
+            <span 
+              key={i}
+              className="transform transition-all duration-700 opacity-100 translate-y-0"
+              style={{
+                animationDelay: `${i * 0.2}s`,
+                textShadow: "2px 2px 4px rgba(0,0,0,0.5)"
+              }}
+            >
+              {word}
+            </span>
           ))}
         </div>
-        <p className="text-xl mt-4 drop-shadow-md px-4 py-2 rounded-md font-montserrat">
+        <p className="text-base md:text-lg mt-4 font-montserrat max-w-md backdrop-blur-sm bg-black/20 px-4 py-2 rounded-md transition-all duration-700">
           {images[currentIndex].subtitle}
         </p>
+        <button className="mt-6 px-5 py-2 bg-[#B8860B] text-white uppercase font-bold rounded text-sm hover:bg-[#9C7A40] transition-all duration-300 transform hover:scale-105">
+          Explore Menu
+        </button>
       </div>
 
-      {/* Left Arrow */}
+      {/* Navigation Arrows */}
       <button
         onClick={prevSlide}
-        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full z-20"
+        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full z-20 hover:bg-black/60 transition-all duration-300"
+        aria-label="Previous slide"
       >
-        <FaChevronLeft size={24} />
+        <ChevronLeft size={20} />
       </button>
 
-      {/* Right Arrow */}
       <button
         onClick={nextSlide}
-        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full z-20"
+        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full z-20 hover:bg-black/60 transition-all duration-300"
+        aria-label="Next slide"
       >
-        <FaChevronRight size={24} />
+        <ChevronRight size={20} />
       </button>
 
       {/* Dots Indicator */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
         {images.map((_, index) => (
           <button
             key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full ${
-              currentIndex === index ? "bg-white" : "bg-gray-400"
+            onClick={() => goToSlide(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              currentIndex === index 
+                ? "bg-white w-5" 
+                : "bg-white/50 hover:bg-white/80"
             }`}
-          ></button>
+            aria-label={`Go to slide ${index + 1}`}
+          />
         ))}
       </div>
     </div>

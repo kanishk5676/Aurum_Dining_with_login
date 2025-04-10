@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer"; // Import the Footer component
 import Content from "./components/Content";
 import Menu from "./components/Menu";
 import Takeaway from "./components/Takeaway";
@@ -11,7 +12,7 @@ import ResConfirmation from "./components/ResConfirmation";
 import UpdateOrDeleteOrder from "./components/UpdateDelete";
 import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
-import AdminMenuManagement from "./components/AdminMenuManagement"; // Import the new component
+import AdminMenuManagement from "./components/AdminMenuManagement";
 import UserLogin from "./components/Login";
 import UserProfile from "./components/UserProfile";
 import UserRegistration from "./components/UserRegistration";
@@ -60,12 +61,17 @@ const PageWrapper = ({ children }) => (
 function App() {
   return (
     <Router>
-      <Navbar />
-      <div
-        className="min-h-screen bg-repeat bg-[length:100px_100px] bg-center px-8 pt-20"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      >
-        <AnimatedRoutes />
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow">
+          <div
+            className="bg-repeat bg-[length:100px_100px] bg-center px-8 pt-20"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          >
+            <AnimatedRoutes />
+          </div>
+        </main>
+        <Footer /> {/* Add the Footer component here */}
       </div>
     </Router>
   );
