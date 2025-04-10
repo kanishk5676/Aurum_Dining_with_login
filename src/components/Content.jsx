@@ -50,7 +50,7 @@ const Content = () => {
             transition={{ duration: 0.8 }}
             className="text-center text-4xl md:text-5xl font-bold mb-16 uppercase tracking-wider"
           >
-            <span className="text-[#B8860B]">Vijaya's</span> Experience
+            <span className="text-[#B8860B]">Arum Dining</span> Experience
           </motion.h1>
           
           <div className="flex flex-col md:flex-row gap-12 items-center">
@@ -77,7 +77,7 @@ const Content = () => {
               
               <motion.div variants={itemVariants} className="space-y-5">
                 <p className="text-gray-200 font-montserrat leading-relaxed">
-                  Indulge in luxury without the wait—reserve your seat at Vijaya's Kitchen effortlessly. 
+                  Indulge in luxury without the wait—reserve your seat at Arum's Kitchen effortlessly. 
                   Plan ahead and guarantee your place at our elegantly curated tables, ensuring an unforgettable 
                   dining experience tailored just for you.
                 </p>
@@ -118,7 +118,7 @@ const Content = () => {
               
               <motion.div variants={itemVariants} className="space-y-5">
                 <p className="text-gray-200 font-montserrat leading-relaxed">
-                  Enjoy the flavors of Vijaya's Kitchen with ease—place a special order and savor your favorites 
+                  Enjoy the flavors of Arum's with ease—place a special order and savor your favorites 
                   just the way you like. Whether you choose to pick up your meal or have it delivered straight 
                   to your doorstep in just 20 minutes, we bring the luxury of fine dining to you.
                 </p>
